@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spooky AR Glasses | Halloween Magic</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+    
+    <style>
+        /* СТИЛІ ЗАЛИШАЮТЬСЯ ТИМИ Ж */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: #000; color: white; overflow: hidden; }
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(45deg, #1a0033, #33001a);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .crystal-ball {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #00ff88, #003322);
+            margin: 0 auto 20px; animation: float 2s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(180deg); }
+        }
+        /* ... решта стилів без змін ... */
+    </style>
+</head>
+<body>
+    <!-- HTML СТРУКТУРА БЕЗ ЗМІН -->
+    <div id="loading-screen">
+        <div class="loader">
+            <div class="crystal-ball"></div>
+            <p>Завантаження магії...</p>
+        </div>
+    </div>
+
+    <div id="app-container" style="display: none;">
+        <video id="video" playsinline></video>
+        <canvas id="canvas"></canvas>
+        
+        <div id="ui-controls">
+            <button id="photo-btn" class="spooky-btn">📸 Сфотографувати</button>
+            <button id="etsy-btn" class="spooky-btn">🛍️ Наш Etsy</button>
+        </div>
+        
+        <div id="hint-message">Наведіть камеру на розфарбовані окуляри...</div>
+    </div>
+
+    <canvas id="screenshot-canvas" style="display: none;"></canvas>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Елементи
+            const loadingScreen = document.getElementById('loading-screen');
+            const appContainer = document.getElementById('app-container');
+            const photoBtn = document.getElementById('photo-btn');
+            const etsyBtn = document.getElementById('etsy-btn');
+            const hintMessage = document.getElementById('hint-message');
+            const screenshotCanvas = document.getElementById('screenshot-canvas');
+            const screenshotCtx = screenshotCanvas.getContext('2d');
+
+            // Константи
+            const YOUR_ETSY_URL = "https://www.etsy.com/shop/YourShopName";
+            const PARTICLE_COUNT = 25;
+
+            // === ШЛЯХИ ДО ТВОЇХ PNG ===
+            const GHOST_TEXTURES = [
+                "./assets/textures/ghost1.png",
+                "./assets/textures/ghost2.png", 
+                "./assets/textures/ghost3.png"
+            ];
+
+            // === ІНІЦІАЛІЗАЦІЯ MINDAR ===
+            const mindarThree = new MindARThree({
+                container: appContainer,
+                imageTargetSrc: "./assets/targets/glasses-target.mind",
+                maxTrack: 1,
+                filterMinCF: 0.001,
+                filterBeta: 0.001,
+            });
+
+            const { renderer, scene, camera } = mindarThree;
+            const anchor = mindarThree.addAnchor(0);
+
+            // === СИСТЕМА ЧАСТИНОК З ТВОЇМИ PNG ===
+            let particleSystem = null;
+            let ghostTextures = [];
+
+            const loadGhostTextures = () => {
+                return new Promise((resolve) => {
+                    const textureLoader = new THREE.TextureLoader();
+                    let loadedCount = 0;
+                    
+                    GHOST_TEXTURES.forEach((texturePath, index) => {
+                        textureLoader.load(texturePath, (texture) => {
+                            ghostTextures[index] = texture;
+                            loadedCount++;
+                            
+                            if (loadedCount === GHOST_TEXTURES.length) {
+                                console.log("✅ Всі текстури завантажено!");
+                                resolve();
+                            }
+                        }, undefined, (error) => {
+                            console.error(`❌ Помилка завантаження текстури ${texturePath}:`, error);
+                            // Створюємо просту текстуру як запасний варіант
+                            ghostTextures[index] = createFallbackTexture();
+                            loadedCount++;
+                            
+                            if (loadedCount === GHOST_TEXTURES.length) {
+                                resolve();
+                            }
+                        });
+                    });
+                });
+            };
+
+            const createFallbackTexture = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 64;
+                canvas.height = 64;
+                
+                // Простий білий круг як запасна текстура
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(32, 32, 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                return new THREE.CanvasTexture(canvas);
+            };
+
+            const createGhostParticles = () => {
+                const particles = new THREE.BufferGeometry();
+                const positions = new Float32Array(PARTICLE_COUNT * 3);
+                const opacities = new Float32Array(PARTICLE_COUNT);
+                const lifeProgress = new Float32Array(PARTICLE_COUNT);
+                const speeds = new Float32Array(PARTICLE_COUNT);
+                const textureIndices = new Float32Array(PARTICLE_COUNT);
+
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    const i3 = i * 3;
+                    positions[i3] = (Math.random() - 0.5) * 0.2;
+                    positions[i3 + 1] = (Math.random() - 0.5) * 0.15;
+                    positions[i3 + 2] = (Math.random() - 0.5) * 0.1;
+                    
+                    opacities[i] = 0;
+                    lifeProgress[i] = Math.random() * 0.5;
+                    speeds[i] = Math.random() * 0.2 + 0.1;
+                    textureIndices[i] = Math.floor(Math.random() * GHOST_TEXTURES.length);
+                }
+
+                particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                particles.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1));
+                particles.setAttribute('lifeProgress', new THREE.BufferAttribute(lifeProgress, 1));
+                particles.setAttribute('speed', new THREE.BufferAttribute(speeds, 1));
+                particles.setAttribute('textureIndex', new THREE.BufferAttribute(textureIndices, 1));
+
+                const material = new THREE.PointsMaterial({
+                    size: 0.05,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    vertexColors: false,
+                    map: ghostTextures[0] // Перша текстура за замовчуванням
+                });
+
+                particleSystem = new THREE.Points(particles, material);
+                return particleSystem;
+            };
+
+            // === АНІМАЦІЯ ЧАСТИНОК ===
+            const updateParticles = (delta) => {
+                if (!particleSystem) return;
+
+                const positions = particleSystem.geometry.attributes.position.array;
+                const opacities = particleSystem.geometry.attributes.opacity.array;
+                const lifeProgress = particleSystem.geometry.attributes.lifeProgress.array;
+                const speeds = particleSystem.geometry.attributes.speed.array;
+                const textureIndices = particleSystem.geometry.attributes.textureIndex.array;
+
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    const i3 = i * 3;
+                    lifeProgress[i] += delta * speeds[i];
+                    
+                    if (lifeProgress[i] < 0) continue;
+                    
+                    // Змінюємо текстуру в залежності від стану
+                    const textureIndex = Math.floor(textureIndices[i]);
+                    if (ghostTextures[textureIndex]) {
+                        particleSystem.material.map = ghostTextures[textureIndex];
+                    }
+                    
+                    if (lifeProgress[i] <= 1.0) {
+                        const progress = lifeProgress[i];
+                        opacities[i] = Math.sin(progress * Math.PI * 0.5);
+                        positions[i3 + 1] += delta * 0.3;
+                    } else if (lifeProgress[i] <= 2.0) {
+                        opacities[i] = 0.8 + Math.sin(Date.now() * 0.005 + i) * 0.2;
+                        positions[i3] += (Math.random() - 0.5) * delta * 0.1;
+                        positions[i3 + 2] += (Math.random() - 0.5) * delta * 0.1;
+                    } else if (lifeProgress[i] <= 3.0) {
+                        const progress = lifeProgress[i] - 2.0;
+                        opacities[i] = 1.0 - progress;
+                    } else {
+                        // Респавн
+                        positions[i3] = (Math.random() - 0.5) * 0.2;
+                        positions[i3 + 1] = (Math.random() - 0.5) * 0.15;
+                        positions[i3 + 2] = (Math.random() - 0.5) * 0.1;
+                        opacities[i] = 0;
+                        lifeProgress[i] = Math.random() * -0.5;
+                        textureIndices[i] = Math.floor(Math.random() * GHOST_TEXTURES.length);
+                    }
+                }
+
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+                particleSystem.geometry.attributes.opacity.needsUpdate = true;
+                particleSystem.geometry.attributes.textureIndex.needsUpdate = true;
+                particleSystem.material.needsUpdate = true;
+            };
+
+            // === ФУНКЦІЯ ФОТО (без змін) ===
+            const takeScreenshot = () => {
+                const flash = document.createElement('div');
+                flash.className = 'flash';
+                document.body.appendChild(flash);
+                
+                let opacity = 0.8;
+                const fadeOut = setInterval(() => {
+                    opacity -= 0.1;
+                    flash.style.opacity = opacity;
+                    if (opacity <= 0) {
+                        document.body.removeChild(flash);
+                        clearInterval(fadeOut);
+                    }
+                }, 30);
+
+                setTimeout(() => {
+                    screenshotCanvas.width = renderer.domElement.width;
+                    screenshotCanvas.height = renderer.domElement.height;
+                    screenshotCtx.drawImage(renderer.domElement, 0, 0);
+                    
+                    screenshotCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    screenshotCtx.font = '16px Arial';
+                    screenshotCtx.textAlign = 'center';
+                    screenshotCtx.fillText('Spooky AR Experience', screenshotCanvas.width / 2, 30);
+                    
+                    screenshotCanvas.toBlob((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        const date = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                        link.download = `spooky-ar-${date}.png`;
+                        link.href = url;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                        
+                        showMessage('Фото збережено! 📸');
+                    });
+                }, 100);
+            };
+
+            // === ДОПОМІЖНІ ФУНКЦІЇ ===
+            const showMessage = (text) => {
+                const message = document.createElement('div');
+                message.className = 'message';
+                message.textContent = text;
+                document.body.appendChild(message);
+                
+                setTimeout(() => {
+                    message.style.opacity = '0';
+                    setTimeout(() => document.body.removeChild(message), 500);
+                }, 2000);
+            };
+
+            // === ПІДПИСКА НА ПОДІЇ ===
+            photoBtn.addEventListener('click', takeScreenshot);
+            etsyBtn.addEventListener('click', () => {
+                window.open(YOUR_ETSY_URL, '_blank');
+            });
+
+            anchor.onTargetFound = () => {
+                console.log("🎯 Маркер знайдено!");
+                photoBtn.style.display = 'block';
+                etsyBtn.style.display = 'block';
+                hintMessage.textContent = "Магія працює! ✨";
+            };
+
+            anchor.onTargetLost = () => {
+                console.log("❌ Маркер втрачено!");
+                photoBtn.style.display = 'none';
+                etsyBtn.style.display = 'none';
+                hintMessage.textContent = "Наведіть камеру на окуляри...";
+            };
+
+            // === ЗАПУСК ===
+            const clock = new THREE.Clock();
+            
+            const start = async () => {
+                // Спочатку завантажуємо текстури
+                await loadGhostTextures();
+                
+                // Потім створюємо частинки
+                particleSystem = createGhostParticles();
+                anchor.group.add(particleSystem);
+                
+                renderer.setAnimationLoop(() => {
+                    const delta = clock.getDelta();
+                    
+                    if (anchor.visible) {
+                        updateParticles(delta);
+                    }
+                    
+                    renderer.render(scene, camera);
+                });
+            };
+
+            try {
+                await mindarThree.start();
+                loadingScreen.style.display = 'none';
+                appContainer.style.display = 'block';
+                await start();
+                console.log("🚀 AR успішно запущено!");
+            } catch (error) {
+                console.error("❌ Помилка запуску AR:", error);
+                loadingScreen.innerHTML = '<p>Помилка завантаження. Перевірте камеру та інтернет.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
