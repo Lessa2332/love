@@ -3,334 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spooky AR Glasses | Halloween Magic</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
-    
+    <title>Ghost Hunter AR - З PNG привидами</title>
     <style>
-        /* СТИЛІ ЗАЛИШАЮТЬСЯ ТИМИ Ж */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Arial', sans-serif; background: #000; color: white; overflow: hidden; }
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(45deg, #1a0033, #33001a);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        #ar-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(45deg, #0a0a0a, #1a1a2e);
+            perspective: 1000px;
+        }
+        
+        .ghost {
+            position: absolute;
+            pointer-events: none;
+            transition: all 0.3s ease-out;
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.7));
+            transform-style: preserve-3d;
+            /* Розмір буде встановлюватись через JS */
+        }
+        
+        .ghost img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .instructions {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 15px 25px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            max-width: 90%;
+        }
+        
+        /* Решта стилів залишається без змін */
+        .distance-indicator {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             z-index: 1000;
+            text-align: center;
+            padding: 20px;
         }
-        .crystal-ball {
-            width: 80px; height: 80px; border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #00ff88, #003322);
-            margin: 0 auto 20px; animation: float 2s ease-in-out infinite;
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        
+        .start-btn {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
         }
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(180deg); }
-        }
-        /* ... решта стилів без змін ... */
     </style>
 </head>
 <body>
-    <!-- HTML СТРУКТУРА БЕЗ ЗМІН -->
-    <div id="loading-screen">
-        <div class="loader">
-            <div class="crystal-ball"></div>
-            <p>Завантаження магії...</p>
-        </div>
-    </div>
-
-    <div id="app-container" style="display: none;">
-        <video id="video" playsinline></video>
-        <canvas id="canvas"></canvas>
-        
-        <div id="ui-controls">
-            <button id="photo-btn" class="spooky-btn">📸 Сфотографувати</button>
-            <button id="etsy-btn" class="spooky-btn">🛍️ Наш Etsy</button>
+    <div id="ar-container">
+        <div class="start-screen" id="startScreen">
+            <h1>👻 Ghost Hunter AR</h1>
+            <p>Мобільна гра для полювання на привидів</p>
+            <button class="start-btn" id="startBtn">Почати гру</button>
         </div>
         
-        <div id="hint-message">Наведіть камеру на розфарбовані окуляри...</div>
+        <div class="instructions">
+            <h2>👻 Мисливці за привидами</h2>
+            <p>Обертайте телефон, щоб знайти привидів навколо вас!</p>
+        </div>
+        
+        <div class="distance-indicator" id="distanceInfo">
+            Ближній привид: ---
+        </div>
     </div>
-
-    <canvas id="screenshot-canvas" style="display: none;"></canvas>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Елементи
-            const loadingScreen = document.getElementById('loading-screen');
-            const appContainer = document.getElementById('app-container');
-            const photoBtn = document.getElementById('photo-btn');
-            const etsyBtn = document.getElementById('etsy-btn');
-            const hintMessage = document.getElementById('hint-message');
-            const screenshotCanvas = document.getElementById('screenshot-canvas');
-            const screenshotCtx = screenshotCanvas.getContext('2d');
-
-            // Константи
-            const YOUR_ETSY_URL = "https://www.etsy.com/shop/YourShopName";
-            const PARTICLE_COUNT = 25;
-
-            // === ШЛЯХИ ДО ТВОЇХ PNG ===
-            const GHOST_TEXTURES = [
-                "./assets/textures/ghost1.png",
-                "./assets/textures/ghost2.png", 
-                "./assets/textures/ghost3.png"
-            ];
-
-            // === ІНІЦІАЛІЗАЦІЯ MINDAR ===
-            const mindarThree = new MindARThree({
-                container: appContainer,
-                imageTargetSrc: "./assets/targets/glasses-target.mind",
-                maxTrack: 1,
-                filterMinCF: 0.001,
-                filterBeta: 0.001,
-            });
-
-            const { renderer, scene, camera } = mindarThree;
-            const anchor = mindarThree.addAnchor(0);
-
-            // === СИСТЕМА ЧАСТИНОК З ТВОЇМИ PNG ===
-            let particleSystem = null;
-            let ghostTextures = [];
-
-            const loadGhostTextures = () => {
-                return new Promise((resolve) => {
-                    const textureLoader = new THREE.TextureLoader();
-                    let loadedCount = 0;
-                    
-                    GHOST_TEXTURES.forEach((texturePath, index) => {
-                        textureLoader.load(texturePath, (texture) => {
-                            ghostTextures[index] = texture;
-                            loadedCount++;
-                            
-                            if (loadedCount === GHOST_TEXTURES.length) {
-                                console.log("✅ Всі текстури завантажено!");
-                                resolve();
-                            }
-                        }, undefined, (error) => {
-                            console.error(`❌ Помилка завантаження текстури ${texturePath}:`, error);
-                            // Створюємо просту текстуру як запасний варіант
-                            ghostTextures[index] = createFallbackTexture();
-                            loadedCount++;
-                            
-                            if (loadedCount === GHOST_TEXTURES.length) {
-                                resolve();
-                            }
-                        });
-                    });
-                });
-            };
-
-            const createFallbackTexture = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 64;
-                canvas.height = 64;
+        class GhostHunterAR {
+            constructor() {
+                this.container = document.getElementById('ar-container');
+                this.startScreen = document.getElementById('startScreen');
+                this.startBtn = document.getElementById('startBtn');
+                this.distanceInfo = document.getElementById('distanceInfo');
                 
-                // Простий білий круг як запасна текстура
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.beginPath();
-                ctx.arc(32, 32, 20, 0, Math.PI * 2);
-                ctx.fill();
+                this.ghosts = [];
+                this.currentAlpha = 0;
+                this.isRunning = false;
                 
-                return new THREE.CanvasTexture(canvas);
-            };
-
-            const createGhostParticles = () => {
-                const particles = new THREE.BufferGeometry();
-                const positions = new Float32Array(PARTICLE_COUNT * 3);
-                const opacities = new Float32Array(PARTICLE_COUNT);
-                const lifeProgress = new Float32Array(PARTICLE_COUNT);
-                const speeds = new Float32Array(PARTICLE_COUNT);
-                const textureIndices = new Float32Array(PARTICLE_COUNT);
-
-                for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    const i3 = i * 3;
-                    positions[i3] = (Math.random() - 0.5) * 0.2;
-                    positions[i3 + 1] = (Math.random() - 0.5) * 0.15;
-                    positions[i3 + 2] = (Math.random() - 0.5) * 0.1;
-                    
-                    opacities[i] = 0;
-                    lifeProgress[i] = Math.random() * 0.5;
-                    speeds[i] = Math.random() * 0.2 + 0.1;
-                    textureIndices[i] = Math.floor(Math.random() * GHOST_TEXTURES.length);
-                }
-
-                particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                particles.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1));
-                particles.setAttribute('lifeProgress', new THREE.BufferAttribute(lifeProgress, 1));
-                particles.setAttribute('speed', new THREE.BufferAttribute(speeds, 1));
-                particles.setAttribute('textureIndex', new THREE.BufferAttribute(textureIndices, 1));
-
-                const material = new THREE.PointsMaterial({
-                    size: 0.05,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending,
-                    depthWrite: false,
-                    vertexColors: false,
-                    map: ghostTextures[0] // Перша текстура за замовчуванням
-                });
-
-                particleSystem = new THREE.Points(particles, material);
-                return particleSystem;
-            };
-
-            // === АНІМАЦІЯ ЧАСТИНОК ===
-            const updateParticles = (delta) => {
-                if (!particleSystem) return;
-
-                const positions = particleSystem.geometry.attributes.position.array;
-                const opacities = particleSystem.geometry.attributes.opacity.array;
-                const lifeProgress = particleSystem.geometry.attributes.lifeProgress.array;
-                const speeds = particleSystem.geometry.attributes.speed.array;
-                const textureIndices = particleSystem.geometry.attributes.textureIndex.array;
-
-                for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    const i3 = i * 3;
-                    lifeProgress[i] += delta * speeds[i];
-                    
-                    if (lifeProgress[i] < 0) continue;
-                    
-                    // Змінюємо текстуру в залежності від стану
-                    const textureIndex = Math.floor(textureIndices[i]);
-                    if (ghostTextures[textureIndex]) {
-                        particleSystem.material.map = ghostTextures[textureIndex];
-                    }
-                    
-                    if (lifeProgress[i] <= 1.0) {
-                        const progress = lifeProgress[i];
-                        opacities[i] = Math.sin(progress * Math.PI * 0.5);
-                        positions[i3 + 1] += delta * 0.3;
-                    } else if (lifeProgress[i] <= 2.0) {
-                        opacities[i] = 0.8 + Math.sin(Date.now() * 0.005 + i) * 0.2;
-                        positions[i3] += (Math.random() - 0.5) * delta * 0.1;
-                        positions[i3 + 2] += (Math.random() - 0.5) * delta * 0.1;
-                    } else if (lifeProgress[i] <= 3.0) {
-                        const progress = lifeProgress[i] - 2.0;
-                        opacities[i] = 1.0 - progress;
-                    } else {
-                        // Респавн
-                        positions[i3] = (Math.random() - 0.5) * 0.2;
-                        positions[i3 + 1] = (Math.random() - 0.5) * 0.15;
-                        positions[i3 + 2] = (Math.random() - 0.5) * 0.1;
-                        opacities[i] = 0;
-                        lifeProgress[i] = Math.random() * -0.5;
-                        textureIndices[i] = Math.floor(Math.random() * GHOST_TEXTURES.length);
-                    }
-                }
-
-                particleSystem.geometry.attributes.position.needsUpdate = true;
-                particleSystem.geometry.attributes.opacity.needsUpdate = true;
-                particleSystem.geometry.attributes.textureIndex.needsUpdate = true;
-                particleSystem.material.needsUpdate = true;
-            };
-
-            // === ФУНКЦІЯ ФОТО (без змін) ===
-            const takeScreenshot = () => {
-                const flash = document.createElement('div');
-                flash.className = 'flash';
-                document.body.appendChild(flash);
+                // PNG зображення привидів (замість емодзі)
+                this.ghostImages = [
+                    'ghost1.png',
+                    'ghost2.png', 
+                    'ghost3.png',
+                    'ghost4.png'
+                ];
                 
-                let opacity = 0.8;
-                const fadeOut = setInterval(() => {
-                    opacity -= 0.1;
-                    flash.style.opacity = opacity;
-                    if (opacity <= 0) {
-                        document.body.removeChild(flash);
-                        clearInterval(fadeOut);
-                    }
-                }, 30);
-
-                setTimeout(() => {
-                    screenshotCanvas.width = renderer.domElement.width;
-                    screenshotCanvas.height = renderer.domElement.height;
-                    screenshotCtx.drawImage(renderer.domElement, 0, 0);
-                    
-                    screenshotCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                    screenshotCtx.font = '16px Arial';
-                    screenshotCtx.textAlign = 'center';
-                    screenshotCtx.fillText('Spooky AR Experience', screenshotCanvas.width / 2, 30);
-                    
-                    screenshotCanvas.toBlob((blob) => {
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        const date = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                        link.download = `spooky-ar-${date}.png`;
-                        link.href = url;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        URL.revokeObjectURL(url);
-                        
-                        showMessage('Фото збережено! 📸');
-                    });
-                }, 100);
-            };
-
-            // === ДОПОМІЖНІ ФУНКЦІЇ ===
-            const showMessage = (text) => {
-                const message = document.createElement('div');
-                message.className = 'message';
-                message.textContent = text;
-                document.body.appendChild(message);
+                // Або використовуйте онлайн зображення:
+                this.onlineGhostImages = [
+                    'https://cdn-icons-png.flaticon.com/512/105/105223.png',
+                    'https://cdn-icons-png.flaticon.com/512/2601/2601981.png',
+                    'https://cdn-icons-png.flaticon.com/512/2601/2601992.png'
+                ];
                 
-                setTimeout(() => {
-                    message.style.opacity = '0';
-                    setTimeout(() => document.body.removeChild(message), 500);
-                }, 2000);
-            };
-
-            // === ПІДПИСКА НА ПОДІЇ ===
-            photoBtn.addEventListener('click', takeScreenshot);
-            etsyBtn.addEventListener('click', () => {
-                window.open(YOUR_ETSY_URL, '_blank');
-            });
-
-            anchor.onTargetFound = () => {
-                console.log("🎯 Маркер знайдено!");
-                photoBtn.style.display = 'block';
-                etsyBtn.style.display = 'block';
-                hintMessage.textContent = "Магія працює! ✨";
-            };
-
-            anchor.onTargetLost = () => {
-                console.log("❌ Маркер втрачено!");
-                photoBtn.style.display = 'none';
-                etsyBtn.style.display = 'none';
-                hintMessage.textContent = "Наведіть камеру на окуляри...";
-            };
-
-            // === ЗАПУСК ===
-            const clock = new THREE.Clock();
-            
-            const start = async () => {
-                // Спочатку завантажуємо текстури
-                await loadGhostTextures();
+                this.ghostSizes = {
+                    veryClose: { min: 120, max: 150 },
+                    close: { min: 80, max: 100 },
+                    medium: { min: 50, max: 70 },
+                    far: { min: 30, max: 45 }
+                };
                 
-                // Потім створюємо частинки
-                particleSystem = createGhostParticles();
-                anchor.group.add(particleSystem);
-                
-                renderer.setAnimationLoop(() => {
-                    const delta = clock.getDelta();
-                    
-                    if (anchor.visible) {
-                        updateParticles(delta);
-                    }
-                    
-                    renderer.render(scene, camera);
-                });
-            };
-
-            try {
-                await mindarThree.start();
-                loadingScreen.style.display = 'none';
-                appContainer.style.display = 'block';
-                await start();
-                console.log("🚀 AR успішно запущено!");
-            } catch (error) {
-                console.error("❌ Помилка запуску AR:", error);
-                loadingScreen.innerHTML = '<p>Помилка завантаження. Перевірте камеру та інтернет.</p>';
+                this.init();
             }
+            
+            async init() {
+                this.startBtn.addEventListener('click', () => this.startGame());
+                
+                if (!window.DeviceOrientationEvent) {
+                    this.showError('Ваш пристрій не підтримує датчики руху');
+                    return;
+                }
+            }
+            
+            async startGame() {
+                this.startScreen.style.display = 'none';
+                this.isRunning = true;
+                
+                await this.requestPermissions();
+                this.setupEventListeners();
+                this.createInitialGhosts();
+                this.animate();
+            }
+            
+            createInitialGhosts() {
+                const distanceLevels = [
+                    { distance: 30, count: 2, sizeType: 'veryClose' },
+                    { distance: 70, count: 3, sizeType: 'close' },
+                    { distance: 120, count: 4, sizeType: 'medium' },
+                    { distance: 200, count: 5, sizeType: 'far' }
+                ];
+                
+                distanceLevels.forEach(level => {
+                    for (let i = 0; i < level.count; i++) {
+                        this.createGhost(
+                            Math.random() * 360,
+                            level.distance,
+                            level.sizeType
+                        );
+                    }
+                });
+            }
+            
+            createGhost(angle, distance, sizeType) {
+                const ghost = document.createElement('div');
+                ghost.className = 'ghost';
+                
+                // Створюємо img елемент
+                const img = document.createElement('img');
+                
+                // Виберіть один з варіантів:
+                
+                // Варіант 1: Локальні PNG (потрібно завантажити файли)
+                // img.src = this.ghostImages[Math.floor(Math.random() * this.ghostImages.length)];
+                
+                // Варіант 2: Онлайн PNG (працює відразу)
+                img.src = this.onlineGhostImages[Math.floor(Math.random() * this.onlineGhostImages.length)];
+                
+                // Варіант 3: Емодзі (як у попередньому коді)
+                // ghost.innerHTML = '👻';
+                
+                ghost.appendChild(img);
+                
+                // Розмір привида
+                const sizeRange = this.ghostSizes[sizeType];
+                const size = Math.random() * (sizeRange.max - sizeRange.min) + sizeRange.min;
+                ghost.style.width = `${size}px`;
+                ghost.style.height = `${size}px`;
+                
+                ghost.dataset.angle = angle;
+                ghost.dataset.distance = distance;
+                ghost.dataset.sizeType = sizeType;
+                ghost.dataset.originalSize = size;
+                
+                this.container.appendChild(ghost);
+                this.ghosts.push(ghost);
+                
+                return ghost;
+            }
+            
+            // Решта методів залишається без змін...
+            async requestPermissions() {
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    try {
+                        const permission = await DeviceOrientationEvent.requestPermission();
+                        if (permission !== 'granted') {
+                            this.showError('Дозвіл на доступ до датчиків не надано!');
+                            this.isRunning = false;
+                        }
+                    } catch (error) {
+                        this.showError('Помилка доступу до датчиків');
+                        this.isRunning = false;
+                    }
+                }
+            }
+            
+            setupEventListeners() {
+                window.addEventListener('deviceorientation', (event) => {
+                    if (!this.isRunning) return;
+                    this.currentAlpha = event.alpha || 0;
+                    this.updateGhostsPosition();
+                });
+            }
+            
+            updateGhostsPosition() {
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                let closestGhost = { distance: Infinity, element: null };
+                
+                this.ghosts.forEach(ghost => {
+                    const ghostAngle = parseFloat(ghost.dataset.angle);
+                    const ghostDistance = parseFloat(ghost.dataset.distance);
+                    
+                    let angleDiff = ghostAngle - this.currentAlpha;
+                    if (angleDiff > 180) angleDiff -= 360;
+                    if (angleDiff < -180) angleDiff += 360;
+                    
+                    const distanceFactor = ghostDistance / 200;
+                    const angleFactor = Math.abs(angleDiff) / 180;
+                    
+                    const scale = Math.max(0.1, 1 - angleFactor * 0.8);
+                    const opacity = Math.max(0.05, 0.8 - angleFactor * 0.7);
+                    
+                    const screenX = centerX + (angleDiff * 5);
+                    const screenY = centerY;
+                    
+                    ghost.style.transform = `translate(${screenX}px, ${screenY}px) scale(${scale})`;
+                    ghost.style.opacity = opacity;
+                    
+                    const totalDistance = angleFactor * 100 + ghostDistance;
+                    if (totalDistance < closestGhost.distance && angleFactor < 0.3) {
+                        closestGhost = { 
+                            distance: totalDistance, 
+                            element: ghost,
+                            sizeType: ghost.dataset.sizeType
+                        };
+                    }
+                });
+                
+                this.updateDistanceIndicator(closestGhost);
+            }
+            
+            updateDistanceIndicator(closestGhost) {
+                if (closestGhost.element) {
+                    const distanceText = this.getDistanceText(closestGhost.distance, closestGhost.sizeType);
+                    this.distanceInfo.textContent = `Найближчий привид: ${distanceText}`;
+                }
+            }
+            
+            getDistanceText(distance, sizeType) {
+                switch(sizeType) {
+                    case 'veryClose': return 'ДУЖЕ БЛИЗЬКО! 🚨';
+                    case 'close': return 'близько ⚠️';
+                    case 'medium': return 'поблизу 👀';
+                    case 'far': return 'далеко 👁️';
+                    default: return 'невизначено';
+                }
+            }
+            
+            animate() {
+                if (!this.isRunning) return;
+                
+                this.ghosts.forEach((ghost, index) => {
+                    const floatOffset = Math.sin(Date.now() * 0.001 + index) * 10;
+                    ghost.style.transform += ` translateY(${floatOffset}px)`;
+                });
+                
+                requestAnimationFrame(() => this.animate());
+            }
+            
+            showError(message) {
+                this.startScreen.innerHTML = `<h1>😕 Помилка</h1><p>${message}</p>`;
+                this.startScreen.style.display = 'flex';
+            }
+        }
+        
+        window.addEventListener('load', () => {
+            new GhostHunterAR();
         });
     </script>
 </body>
