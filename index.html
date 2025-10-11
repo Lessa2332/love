@@ -1,616 +1,144 @@
 <!DOCTYPE html>
 <html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halloween Bracelet AR Adventure</title>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <title>🎃 Гарбузове світло</title>
+
+    <!-- Підключаємо бібліотеки -->
+    <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background: #0a0014; 
-            color: #8a2be2; 
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: black;
+        font-family: "Comic Sans MS", cursive;
+      }
+
+      #hint {
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 18px;
+        color: #fff;
+        background: rgba(255, 140, 0, 0.9);
+        border-radius: 16px;
+        box-shadow: 0 0 20px #ffb347;
+        font-size: 20px;
+        animation: glow 2s infinite alternate;
+      }
+
+      @keyframes glow {
+        from {
+          box-shadow: 0 0 10px #ff8c00;
         }
-        
-        .screen { 
-            position: absolute; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%; 
-            display: flex; flex-direction: column; 
-            justify-content: center; align-items: center;
-            text-align: center;
-            background: radial-gradient(circle, #1a0033, #0a0014);
+        to {
+          box-shadow: 0 0 30px #ffd580;
         }
-        
-        #startScreen { z-index: 1000; }
-        #scanScreen { display: none; }
-        #gameScreen { display: none; }
-        
-        /* Містичний сканер */
-        .scanner-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 20px auto;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        
-        /* AR контейнери */
-        #marker-container, #markerless-container {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-        }
-        
-        #markerless-container { display: none; }
-        
-        /* Ефекти переходу */
-        .transition-effect {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #8a2be2, transparent);
-            opacity: 0;
-            z-index: 1000;
-            pointer-events: none;
-        }
-        
-        /* Ігровий HUD */
-        .game-hud {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            padding: 15px 25px;
-            border-radius: 20px;
-            border: 2px solid #8a2be2;
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        
-        .power-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .power-bar {
-            width: 100px;
-            height: 10px;
-            background: #333;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        
-        .power-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #8a2be2, #ff00ff);
-            transition: width 0.3s;
-        }
-        
-        .ghost-counter {
-            font-size: 18px;
-            font-weight: bold;
-        }
-        
-        /* Кнопки */
-        .btn-halloween {
-            background: linear-gradient(45deg, #8a2be2, #ff00ff);
-            border: none;
-            color: white;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 25px;
-            cursor: pointer;
-            margin: 10px;
-            font-weight: bold;
-            transition: transform 0.2s;
-        }
-        
-        .btn-halloween:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
-        }
-        
-        /* Анімації */
-        @keyframes pulse {
-            0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-            50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
-        }
-        
-        @keyframes energyAbsorption {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(0); opacity: 0; }
-        }
-        
-        .spooky-text {
-            text-shadow: 0 0 10px #8a2be2, 0 0 20px #ff00ff;
-            animation: pulse 2s infinite;
-        }
-        
-        .instructions {
-            margin: 20px 0;
-            color: #a45ee5;
-            line-height: 1.5;
-        }
+      }
     </style>
-</head>
-<body>
-    <!-- Стартовий екран -->
-    <div class="screen" id="startScreen">
-        <h1 class="spooky-text">🎃 BRACELET AR ADVENTURE</h1>
-        <div class="instructions">
-            <p>Твій браслет - ключ до світу привидів!</p>
-            <p>Активуй його та відкрий магічні сили</p>
-        </div>
-        <button class="btn-halloween" onclick="startGame()">РОЗПОЧАТИ ПОЛЮВАННЯ</button>
-        <div class="instructions">
-            <p>🔍 Направ камеру на свій браслет</p>
-            <p>👻 Лови привидів та збирай нагороди</p>
-            <p>🎁 Отримай ексклюзивні бонуси!</p>
-        </div>
-    </div>
-    
-    <!-- Екран сканування браслета -->
-    <div class="screen" id="scanScreen">
-        <h2 class="spooky-text">🔍 АКТИВАЦІЯ БРАСЛЕТА</h2>
-        <p class="instructions">Наведи камеру на свій хеловінський браслет</p>
-        
-        <div class="scanner-container" id="scanner-container">
-            <div id="marker-container"></div>
-        </div>
-        
-        <div class="instructions">
-            <p>Шукай спеціальний символ 🎃 на браслеті</p>
-            <p id="progressText">Підготовка сканера...</p>
-        </div>
-        
-        <div style="margin-top: 20px;">
-            <div style="width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; margin: 0 auto;">
-                <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #8a2be2, #ff00ff); transition: width 0.3s;"></div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Ігровий екран (безмаркерний) -->
-    <div class="screen" id="gameScreen">
-        <div id="markerless-container"></div>
-        <div class="game-hud">
-            <div class="power-indicator">
-                <span>⚡ Енергія:</span>
-                <div class="power-bar">
-                    <div class="power-fill" id="braceletEnergy" style="width: 100%;"></div>
-                </div>
-            </div>
-            <div class="ghost-counter">👻: <span id="ghostCount">0</span>/10</div>
-        </div>
-    </div>
-    
-    <!-- Ефект переходу -->
-    <div class="transition-effect" id="transitionEffect"></div>
+  </head>
+
+  <body>
+    <div id="hint">🎤 Скажи щось гарбузу — він засвітиться!</div>
+
+    <a-scene
+      mindar-image="imageTargetSrc: ./targets.mind;"
+      color-space="sRGB"
+      embedded
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: true"
+    >
+      <a-assets>
+        <!-- 🔸 твоя модель гарбуза -->
+        <a-asset-item id="pumpkinModel" src="./pumpkin.glb"></a-asset-item>
+      </a-assets>
+
+      <a-camera position="0 0 0"></a-camera>
+
+      <a-entity mindar-image-target="targetIndex: 0">
+        <!-- 🎃 Гарбуз -->
+        <a-gltf-model
+          id="pumpkin"
+          src="#pumpkinModel"
+          position="0 -0.1 0"
+          rotation="0 180 0"
+          scale="0.5 0.5 0.5"
+        ></a-gltf-model>
+
+        <!-- 💡 Внутрішнє світло -->
+        <a-light
+          id="pumpkinLight"
+          type="point"
+          color="#FFA500"
+          position="0 0.2 0"
+          intensity="0.4"
+          distance="3"
+          decay="1"
+        ></a-light>
+
+        <!-- 🌕 М’яке сяйво -->
+        <a-entity
+          id="glowSphere"
+          geometry="primitive: sphere; radius: 0.2;"
+          material="color: #FF9900; opacity: 0.3; transparent: true;"
+          position="0 0.2 0"
+          scale="1 1 1"
+        ></a-entity>
+
+        <a-light type="ambient" color="#ffcc88" intensity="0.4"></a-light>
+      </a-entity>
+
+      <a-sky color="#0b0b1d"></a-sky>
+      <a-light
+        type="hemisphere"
+        color="#fff4e0"
+        ground-color="#ff6600"
+        intensity="0.2"
+      ></a-light>
+    </a-scene>
 
     <script>
-        class MysticalScanner {
-            constructor(containerId) {
-                this.container = document.getElementById(containerId);
-                this.canvas = document.createElement('canvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.width = 300;
-                this.height = 300;
-                this.scanPosition = 0;
-                this.particles = [];
-                
-                this.init();
-            }
-            
-            init() {
-                this.canvas.width = this.width;
-                this.canvas.height = this.height;
-                this.canvas.style.position = 'absolute';
-                this.canvas.style.top = '0';
-                this.canvas.style.left = '0';
-                this.canvas.style.zIndex = '1';
-                
-                this.container.appendChild(this.canvas);
-                
-                // Створюємо частинки
-                for (let i = 0; i < 15; i++) {
-                    this.particles.push({
-                        x: Math.random() * this.width,
-                        y: Math.random() * this.height,
-                        size: Math.random() * 3 + 1,
-                        speed: Math.random() * 2 + 1,
-                        angle: Math.random() * Math.PI * 2
-                    });
-                }
-                
-                this.animate();
-            }
-            
-            draw() {
-                // Очищення canvas
-                this.ctx.clearRect(0, 0, this.width, this.height);
-                
-                // Темний фон
-                this.ctx.fillStyle = 'rgba(10, 0, 20, 0.8)';
-                this.ctx.fillRect(0, 0, this.width, this.height);
-                
-                // Основа сканера - прямокутник з пунктиром
-                this.ctx.strokeStyle = '#8a2be2';
-                this.ctx.lineWidth = 3;
-                this.ctx.setLineDash([10, 5]);
-                this.ctx.strokeRect(20, 20, 260, 260);
-                
-                // Енергетичні кола
-                this.drawEnergyCircles();
-                
-                // Скануючий промінь
-                this.drawScanningBeam();
-                
-                // Частинки енергії
-                this.drawEnergyParticles();
-                
-                // Текст сканування
-                this.drawScanningText();
-            }
-            
-            drawEnergyCircles() {
-                const time = Date.now() * 0.002;
-                
-                // Основний круг
-                this.ctx.beginPath();
-                this.ctx.arc(150, 150, 80, 0, Math.PI * 2);
-                this.ctx.strokeStyle = `rgba(138, 43, 226, ${0.5 + Math.sin(time) * 0.3})`;
-                this.ctx.lineWidth = 2;
-                this.ctx.setLineDash([]);
-                this.ctx.stroke();
-                
-                // Пульсуючі кільця
-                for (let i = 0; i < 3; i++) {
-                    const radius = 60 + Math.sin(time + i) * 20;
-                    const alpha = 0.3 - i * 0.1;
-                    
-                    this.ctx.beginPath();
-                    this.ctx.arc(150, 150, radius, 0, Math.PI * 2);
-                    this.ctx.strokeStyle = `rgba(138, 43, 226, ${alpha})`;
-                    this.ctx.lineWidth = 1;
-                    this.ctx.stroke();
-                }
-            }
-            
-            drawScanningBeam() {
-                this.scanPosition = (this.scanPosition + 2) % this.height;
-                
-                // Градієнт для променя
-                const gradient = this.ctx.createLinearGradient(150, this.scanPosition - 50, 150, this.scanPosition + 50);
-                gradient.addColorStop(0, 'transparent');
-                gradient.addColorStop(0.5, '#8a2be2');
-                gradient.addColorStop(1, 'transparent');
-                
-                this.ctx.strokeStyle = gradient;
-                this.ctx.lineWidth = 3;
-                this.ctx.setLineDash([]);
-                
-                this.ctx.beginPath();
-                this.ctx.moveTo(150, this.scanPosition - 50);
-                this.ctx.lineTo(150, this.scanPosition + 50);
-                this.ctx.stroke();
-                
-                // Сяйво променя
-                this.ctx.shadowColor = '#8a2be2';
-                this.ctx.shadowBlur = 15;
-                this.ctx.stroke();
-                this.ctx.shadowBlur = 0;
-            }
-            
-            drawEnergyParticles() {
-                const time = Date.now() * 0.001;
-                
-                // Оновлюємо та малюємо частинки
-                this.particles.forEach(particle => {
-                    particle.x += Math.cos(particle.angle) * particle.speed;
-                    particle.y += Math.sin(particle.angle) * particle.speed;
-                    
-                    // Перевірка меж
-                    if (particle.x < 20 || particle.x > 280 || particle.y < 20 || particle.y > 280) {
-                        particle.x = 150;
-                        particle.y = 150;
-                        particle.angle = Math.random() * Math.PI * 2;
-                    }
-                    
-                    const alpha = 0.7 + Math.sin(time + particle.x * 0.1) * 0.3;
-                    this.ctx.fillStyle = `rgba(138, 43, 226, ${alpha})`;
-                    this.ctx.beginPath();
-                    this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-                    this.ctx.fill();
-                });
-            }
-            
-            drawScanningText() {
-                const time = Date.now() * 0.001;
-                const alpha = 0.5 + Math.sin(time * 3) * 0.5;
-                
-                this.ctx.fillStyle = `rgba(138, 43, 226, ${alpha})`;
-                this.ctx.font = 'bold 14px Arial';
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText('СКАНУВАННЯ...', 150, 280);
-            }
-            
-            animate() {
-                this.draw();
-                requestAnimationFrame(() => this.animate());
-            }
-        }
+      // 🎧 Реакція гарбуза на голос
+      async function initMic() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const audioContext = new AudioContext();
+          const analyser = audioContext.createAnalyser();
+          const source = audioContext.createMediaStreamSource(stream);
+          source.connect(analyser);
 
-        class HybridARGame {
-            constructor() {
-                this.mindARMarker = null;
-                this.mindARMarkerless = null;
-                this.scanner = null;
-                this.isBraceletActivated = false;
-                this.scanProgress = 0;
-                this.ghostsCaught = 0;
-                this.braceletEnergy = 100;
-                
-                this.init();
-            }
-            
-            async init() {
-                // Показуємо стартовий екран
-                this.showScreen('startScreen');
-            }
-            
-            async startGame() {
-                this.showScreen('scanScreen');
-                await this.initMarkerTracking();
-                this.startScanningProgress();
-            }
-            
-            async initMarkerTracking() {
-                try {
-                    // Створюємо містичний сканер
-                    this.scanner = new MysticalScanner('scanner-container');
-                    
-                    // Для демо - використовуємо безмаркерний трекінг з імітацією маркера
-                    this.mindARMarker = new MindARThree({
-                        container: document.getElementById("marker-container"),
-                        // У реальному додатку тут буде imageTargetSrc з файлом маркера
-                        maxTrack: 1
-                    });
-                    
-                    const { renderer, scene, camera } = this.mindARMarker;
-                    
-                    // Додаємо тестову сцену для демонстрації
-                    const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-                    const material = new THREE.MeshBasicMaterial({ color: 0x8a2be2 });
-                    const cube = new THREE.Mesh(geometry, material);
-                    scene.add(cube);
-                    
-                    // Анімація куба
-                    const animate = () => {
-                        cube.rotation.x += 0.01;
-                        cube.rotation.y += 0.01;
-                        renderer.render(scene, camera);
-                        requestAnimationFrame(animate);
-                    };
-                    
-                    await this.mindARMarker.start();
-                    animate();
-                    
-                } catch (error) {
-                    console.error("Помилка ініціалізації AR:", error);
-                    this.showMessage("Помилка AR. Переходжу в демо-режим...");
-                    setTimeout(() => this.simulateBraceletDetection(), 2000);
-                }
-            }
-            
-            startScanningProgress() {
-                const progressInterval = setInterval(() => {
-                    this.scanProgress += Math.random() * 15;
-                    if (this.scanProgress > 100) this.scanProgress = 100;
-                    
-                    document.getElementById('progressBar').style.width = this.scanProgress + '%';
-                    document.getElementById('progressText').textContent = 
-                        `Сканування... ${Math.round(this.scanProgress)}%`;
-                    
-                    if (this.scanProgress >= 100 && !this.isBraceletActivated) {
-                        clearInterval(progressInterval);
-                        this.simulateBraceletDetection();
-                    }
-                }, 500);
-            }
-            
-            simulateBraceletDetection() {
-                this.showMessage("🎯 Браслет знайдено! Активую...");
-                setTimeout(() => {
-                    this.onBraceletDetected();
-                }, 1500);
-            }
-            
-            async onBraceletDetected() {
-                if (this.isBraceletActivated) return;
-                this.isBraceletActivated = true;
-                
-                this.showMessage("🔮 Браслет активовано! Завантаження магічних сил...");
-                
-                // 1. Показати ефект поглинання
-                await this.showAbsorptionEffect();
-                
-                // 2. Перейти до безмаркерного режиму
-                await this.switchToMarkerlessMode();
-                
-                // 3. Запустити гру
-                this.startGhostHuntingGame();
-            }
-            
-            async showAbsorptionEffect() {
-                const effect = document.getElementById('transitionEffect');
-                effect.style.opacity = '1';
-                effect.style.transition = 'all 2s';
-                effect.style.background = 'radial-gradient(circle at center, #8a2be2, #ff00ff, transparent)';
-                
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        effect.style.opacity = '0';
-                        setTimeout(resolve, 1000);
-                    }, 2000);
-                });
-            }
-            
-            async switchToMarkerlessMode() {
-                document.getElementById('scanScreen').style.display = 'none';
-                document.getElementById('gameScreen').style.display = 'flex';
-                
-                await this.initMarkerlessTracking();
-            }
-            
-            async initMarkerlessTracking() {
-                try {
-                    this.mindARMarkerless = new MindARThree({
-                        container: document.getElementById("markerless-container"),
-                    });
-                    
-                    const { renderer, scene, camera } = this.mindARMarkerless;
-                    
-                    // Додаємо світло
-                    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-                    scene.add(ambientLight);
-                    const directionalLight = new THREE.DirectionalLight(0x8a2be2, 0.8);
-                    directionalLight.position.set(0, 1, 1);
-                    scene.add(directionalLight);
-                    
-                    await this.mindARMarkerless.start();
-                    renderer.setAnimationLoop(() => {
-                        renderer.render(scene, camera);
-                    });
-                    
-                } catch (error) {
-                    console.error("Помилка безмаркерного трекінгу:", error);
-                    this.showMessage("Безмаркерний режим активовано!");
-                }
-            }
-            
-            startGhostHuntingGame() {
-                this.showMessage("🎮 Полювання на привидів почалось!");
-                this.spawnGhosts();
-                this.startGameLoop();
-            }
-            
-            spawnGhosts() {
-                // Імітація появи привидів
-                let ghostSpawnCount = 0;
-                const spawnInterval = setInterval(() => {
-                    if (ghostSpawnCount < 10) {
-                        this.showMessage("👻 З'явився новий привид!");
-                        ghostSpawnCount++;
-                    } else {
-                        clearInterval(spawnInterval);
-                    }
-                }, 3000);
-            }
-            
-            catchGhost() {
-                if (this.braceletEnergy <= 0) {
-                    this.showMessage("⚡ Заряд браслета закінчився!");
-                    return;
-                }
-                
-                this.ghostsCaught++;
-                this.braceletEnergy -= 10;
-                
-                this.updateGameUI();
-                this.showMessage(`🎯 Впіймано привида! Залишилось: ${10 - this.ghostsCaught}`);
-                
-                if (this.ghostsCaught >= 10) {
-                    this.completeGame();
-                }
-            }
-            
-            updateGameUI() {
-                document.getElementById('ghostCount').textContent = this.ghostsCaught;
-                document.getElementById('braceletEnergy').style.width = this.braceletEnergy + '%';
-            }
-            
-            startGameLoop() {
-                // Відновлення енергії з часом
-                const energyInterval = setInterval(() => {
-                    if (this.braceletEnergy < 100) {
-                        this.braceletEnergy += 0.5;
-                        this.updateGameUI();
-                    }
-                }, 1000);
-            }
-            
-            completeGame() {
-                this.showMessage("🎉 ВІТАЄМО! Ти впорався з усіма привидами!");
-                
-                setTimeout(() => {
-                    const reward = {
-                        title: "ЕКСКЛЮЗИВНА НАГОРОДА",
-                        description: "Ти розблокував спеціальну знижку 20% на наступну покупку!",
-                        code: "BRACELET20"
-                    };
-                    
-                    this.showReward(reward);
-                }, 2000);
-            }
-            
-            showScreen(screenId) {
-                document.querySelectorAll('.screen').forEach(screen => {
-                    screen.style.display = 'none';
-                });
-                document.getElementById(screenId).style.display = 'flex';
-            }
-            
-            showMessage(text) {
-                console.log(text);
-                // Можна додати красиві спливаючі повідомлення
-            }
-            
-            showReward(reward) {
-                const rewardHTML = `
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-                         background: rgba(0,0,0,0.95); display: flex; flex-direction: column;
-                         justify-content: center; align-items: center; z-index: 2000;
-                         color: #8a2be2; text-align: center; padding: 20px;">
-                        <h1 class="spooky-text">🎁 ВІТАЄМО!</h1>
-                        <h2>${reward.title}</h2>
-                        <p style="margin: 20px 0; font-size: 18px;">${reward.description}</p>
-                        <div style="background: rgba(138, 43, 226, 0.2); padding: 20px; border-radius: 15px; border: 2px solid #8a2be2;">
-                            <h3 style="margin-bottom: 10px;">ТВІЙ ПРОМОКОД:</h3>
-                            <div style="font-size: 28px; letter-spacing: 3px; font-weight: bold; color: #ff00ff;">${reward.code}</div>
-                        </div>
-                        <button class="btn-halloween" onclick="location.reload()" style="margin-top: 30px;">ГРАТИ ЩЕ РАЗ</button>
-                    </div>
-                `;
-                
-                document.body.insertAdjacentHTML('beforeend', rewardHTML);
-            }
+          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          const pumpkinLight = document.querySelector("#pumpkinLight");
+          const glowSphere = document.querySelector("#glowSphere");
+
+          function animateLight() {
+            analyser.getByteFrequencyData(dataArray);
+            const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+            const loudness = avg / 80;
+            const intensity = Math.min(loudness * 3, 3);
+            const glowSize = 1 + loudness * 0.8;
+
+            // Плавна анімація
+            pumpkinLight.setAttribute("intensity", (0.2 + intensity).toFixed(2));
+            glowSphere.setAttribute("scale", `${glowSize} ${glowSize} ${glowSize}`);
+            glowSphere.setAttribute("material", `opacity: ${0.2 + loudness * 0.3}`);
+
+            requestAnimationFrame(animateLight);
+          }
+
+          animateLight();
+        } catch (err) {
+          alert("🎤 Дозволь доступ до мікрофона, щоб гарбуз ожив!");
+          console.error(err);
         }
-        
-        // Глобальні функції
-        let gameInstance;
-        
-        function startGame() {
-            gameInstance = new HybridARGame();
-            gameInstance.startGame();
-        }
-        
-        // Обробник кліків для зловлення привидів
-        document.addEventListener('click', function(e) {
-            if (gameInstance && gameInstance.isBraceletActivated) {
-                // Перевіряємо, що клік не по кнопці
-                if (!e.target.classList.contains('btn-halloween')) {
-                    gameInstance.catchGhost();
-                }
-            }
-        });
+      }
+
+      window.addEventListener("load", initMic);
     </script>
-</body>
+  </body>
 </html>
+
+
