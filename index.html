@@ -1,144 +1,136 @@
 <!DOCTYPE html>
 <html lang="uk">
-  <head>
-    <meta charset="UTF-8" />
-    <title>🎃 Гарбузове світло</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎃 Гарбузове світло</title>
 
-    <!-- Підключаємо бібліотеки -->
-    <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <!-- Підключаємо бібліотеки -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-        background-color: black;
-        font-family: "Comic Sans MS", cursive;
-      }
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+      font-family: "Comic Sans MS", cursive;
+    }
 
-      #hint {
-        position: absolute;
-        top: 15px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 12px 18px;
-        color: #fff;
-        background: rgba(255, 140, 0, 0.9);
-        border-radius: 16px;
-        box-shadow: 0 0 20px #ffb347;
-        font-size: 20px;
-        animation: glow 2s infinite alternate;
-      }
+    #hint {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 18px;
+      color: #fff;
+      background: rgba(255, 140, 0, 0.9);
+      border-radius: 16px;
+      box-shadow: 0 0 20px #ffb347;
+      font-size: 20px;
+      animation: glow 2s infinite alternate;
+    }
 
-      @keyframes glow {
-        from {
-          box-shadow: 0 0 10px #ff8c00;
-        }
-        to {
-          box-shadow: 0 0 30px #ffd580;
-        }
-      }
-    </style>
-  </head>
+    @keyframes glow {
+      from { box-shadow: 0 0 10px #ff8c00; }
+      to { box-shadow: 0 0 30px #ffd580; }
+    }
+  </style>
+</head>
 
-  <body>
-    <div id="hint">🎤 Скажи щось гарбузу — він засвітиться!</div>
+<body>
+  <div id="hint">🎤 Скажи щось гарбузу — він засвітиться!</div>
 
-    <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind;"
-      color-space="sRGB"
-      embedded
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: true"
-    >
-      <a-assets>
-        <!-- 🔸 твоя модель гарбуза -->
-        <a-asset-item id="pumpkinModel" src="./pumpkin.glb"></a-asset-item>
-      </a-assets>
+  <a-scene
+    mindar-image="imageTargetSrc: ./targets.mind;"
+    color-space="sRGB"
+    embedded
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+  >
+    <a-assets>
+      <a-asset-item id="pumpkinModel" src="./pumpkin.glb"></a-asset-item>
+    </a-assets>
 
-      <a-camera position="0 0 0"></a-camera>
+    <a-camera position="0 0 0.8"></a-camera>
 
-      <a-entity mindar-image-target="targetIndex: 0">
-        <!-- 🎃 Гарбуз -->
-        <a-gltf-model
-          id="pumpkin"
-          src="#pumpkinModel"
-          position="0 -0.1 0"
-          rotation="0 180 0"
-          scale="0.5 0.5 0.5"
-        ></a-gltf-model>
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-gltf-model
+        id="pumpkin"
+        src="#pumpkinModel"
+        position="0 -0.1 0"
+        rotation="0 180 0"
+        scale="0.5 0.5 0.5"
+      ></a-gltf-model>
 
-        <!-- 💡 Внутрішнє світло -->
-        <a-light
-          id="pumpkinLight"
-          type="point"
-          color="#FFA500"
-          position="0 0.2 0"
-          intensity="0.4"
-          distance="3"
-          decay="1"
-        ></a-light>
-
-        <!-- 🌕 М’яке сяйво -->
-        <a-entity
-          id="glowSphere"
-          geometry="primitive: sphere; radius: 0.2;"
-          material="color: #FF9900; opacity: 0.3; transparent: true;"
-          position="0 0.2 0"
-          scale="1 1 1"
-        ></a-entity>
-
-        <a-light type="ambient" color="#ffcc88" intensity="0.4"></a-light>
-      </a-entity>
-
-      <a-sky color="#0b0b1d"></a-sky>
       <a-light
-        type="hemisphere"
-        color="#fff4e0"
-        ground-color="#ff6600"
-        intensity="0.2"
+        id="pumpkinLight"
+        type="point"
+        color="#FFA500"
+        position="0 0.2 0"
+        intensity="0.4"
+        distance="3"
+        decay="1"
       ></a-light>
-    </a-scene>
 
-    <script>
-      // 🎧 Реакція гарбуза на голос
-      async function initMic() {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const audioContext = new AudioContext();
-          const analyser = audioContext.createAnalyser();
-          const source = audioContext.createMediaStreamSource(stream);
-          source.connect(analyser);
+      <a-entity
+        id="glowSphere"
+        geometry="primitive: sphere; radius: 0.2;"
+        material="color: #FF9900; opacity: 0.3; transparent: true;"
+        position="0 0.2 0"
+        scale="1 1 1"
+      ></a-entity>
 
-          const dataArray = new Uint8Array(analyser.frequencyBinCount);
-          const pumpkinLight = document.querySelector("#pumpkinLight");
-          const glowSphere = document.querySelector("#glowSphere");
+      <a-light type="ambient" color="#ffcc88" intensity="0.4"></a-light>
+    </a-entity>
 
-          function animateLight() {
-            analyser.getByteFrequencyData(dataArray);
-            const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-            const loudness = avg / 80;
-            const intensity = Math.min(loudness * 3, 3);
-            const glowSize = 1 + loudness * 0.8;
+    <a-sky color="#0b0b1d"></a-sky>
+    <a-light
+      type="hemisphere"
+      color="#fff4e0"
+      ground-color="#ff6600"
+      intensity="0.2"
+    ></a-light>
+  </a-scene>
 
-            // Плавна анімація
-            pumpkinLight.setAttribute("intensity", (0.2 + intensity).toFixed(2));
-            glowSphere.setAttribute("scale", `${glowSize} ${glowSize} ${glowSize}`);
-            glowSphere.setAttribute("material", `opacity: ${0.2 + loudness * 0.3}`);
+  <script>
+    async function initMic() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const audioContext = new AudioContext();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
 
-            requestAnimationFrame(animateLight);
-          }
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const pumpkinLight = document.querySelector("#pumpkinLight");
+        const glowSphere = document.querySelector("#glowSphere");
 
-          animateLight();
-        } catch (err) {
-          alert("🎤 Дозволь доступ до мікрофона, щоб гарбуз ожив!");
-          console.error(err);
+        function animateLight() {
+          analyser.getByteFrequencyData(dataArray);
+          const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+          const loudness = avg / 80;
+          const intensity = Math.min(loudness * 3, 3);
+          const glowSize = 1 + loudness * 0.8;
+
+          pumpkinLight.setAttribute("intensity", (0.2 + intensity).toFixed(2));
+          glowSphere.setAttribute("scale", `${glowSize} ${glowSize} ${glowSize}`);
+          glowSphere.setAttribute("material", { opacity: 0.2 + loudness * 0.3 }); // ✅ ВИПРАВЛЕНО
+
+          requestAnimationFrame(animateLight);
         }
-      }
 
-      window.addEventListener("load", initMic);
-    </script>
-  </body>
+        animateLight();
+      } catch (err) {
+        alert("🎤 Дозволь доступ до мікрофона, щоб гарбуз ожив!");
+        console.error(err);
+      }
+    }
+
+    window.addEventListener("load", initMic);
+  </script>
+</body>
 </html>
+
 
 
