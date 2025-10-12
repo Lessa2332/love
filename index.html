@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>🕯️ Свічка пам'яті</title>
 
-  <!-- ✅ Коректні посилання -->
+  <!-- ✅ A-Frame завантажується ПЕРШИМ -->
   <script src="https://unpkg.com/aframe@1.6.0/dist/aframe.min.js"></script>
+  <!-- ✅ MindAR завантажується ПІСЛЯ A-Frame -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
@@ -48,7 +49,7 @@
       <a-asset-item id="dejaVuFont" src="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-asset-item>
     </a-assets>
 
-    <a-camera position="0 0 0"></a-camera>
+    <a-camera position="0 0 0" active="false"></a-camera>
 
     <!-- 🕯️ Свічка -->
     <a-entity mindar-image-target="targetIndex: 0" id="candleTarget">
@@ -78,46 +79,48 @@
   </a-scene>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const flame = document.getElementById('flame');
-      const light = document.getElementById('flameLight');
-      const smoke = document.getElementById('smoke');
+    // Чекаємо повного завантаження сторінки
+    window.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM завантажено');
+      
       const scene = document.querySelector('a-scene');
-      const loader = document.getElementById('loader');
-      const target = document.getElementById('candleTarget');
-
-      let isLit = true;
-
-      function toggleCandle() {
-        if (isLit) {
-          flame.setAttribute('visible', false);
-          light.setAttribute('intensity', 0);
-          smoke.setAttribute('visible', true);
-          isLit = false;
-        } else {
-          flame.setAttribute('visible', true);
-          light.setAttribute('intensity', 1);
-          smoke.setAttribute('visible', false);
-          isLit = true;
-        }
-      }
-
-      scene.addEventListener('click', toggleCandle);
-
-      // Обробники для AR-маркера
-      target.addEventListener('targetFound', () => {
-        console.log('Маркер знайдено');
-        loader.style.display = 'none';
-      });
-
-      target.addEventListener('targetLost', () => {
-        console.log('Маркер втрачено');
-        loader.style.display = 'block';
-      });
-
-      // Перевірка завантаження сцени
+      
       scene.addEventListener('loaded', () => {
         console.log('A-Frame сцена завантажена');
+        
+        const flame = document.getElementById('flame');
+        const light = document.getElementById('flameLight');
+        const smoke = document.getElementById('smoke');
+        const loader = document.getElementById('loader');
+        const target = document.getElementById('candleTarget');
+
+        let isLit = true;
+
+        function toggleCandle() {
+          if (isLit) {
+            flame.setAttribute('visible', false);
+            light.setAttribute('intensity', 0);
+            smoke.setAttribute('visible', true);
+            isLit = false;
+          } else {
+            flame.setAttribute('visible', true);
+            light.setAttribute('intensity', 1);
+            smoke.setAttribute('visible', false);
+            isLit = true;
+          }
+        }
+
+        scene.addEventListener('click', toggleCandle);
+
+        target.addEventListener('targetFound', () => {
+          console.log('Маркер знайдено');
+          loader.style.display = 'none';
+        });
+
+        target.addEventListener('targetLost', () => {
+          console.log('Маркер втрачено');
+          loader.style.display = 'block';
+        });
       });
     });
   </script>
