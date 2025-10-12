@@ -1,92 +1,127 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Свічка з Димом</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>🕯️ Свічка пам’яті</title>
 
-  <!-- A-Frame + MindAR -->
-  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <!-- ✅ A-Frame -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe.min.js"></script>
+
+  <!-- ✅ MindAR -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
 
   <style>
-    body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: transparent; }
-    a-scene { background: transparent; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+      font-family: "Comic Sans MS", cursive;
+    }
+    #loader {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #ffd580;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 18px;
+      z-index: 999;
+    }
   </style>
 </head>
+
 <body>
+  <div id="loader">🕯️ Наведи камеру на маркер</div>
 
-<a-scene mindar-image="imageTargetSrc: ./marker.mind; autoStart: true;" embedded color-space="sRGB" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-  
-  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-scene
+    mindar-image="imageTargetSrc: ./marker.mind; autoStart: true;"
+    color-space="sRGB"
+    embedded
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    renderer="colorManagement: true; alpha: true;"
+  >
+    <a-assets></a-assets>
 
-  <a-entity mindar-image-target="targetIndex: 0">
-    <!-- Свічка -->
-    <a-cylinder position="0 0.5 0" radius="0.1" height="0.5" color="#fff5e1"></a-cylinder>
+    <a-camera position="0 0 0.8"></a-camera>
 
-    <!-- Полум'я -->
-    <a-sphere id="flame" position="0 0.85 0" radius="0.05" color="#ff9c00" emissive="#ff9c00">
-      <a-animation id="flameScale" attribute="scale" from="1 1 1" to="1.3 1.3 1.3" direction="alternate" dur="500" repeat="indefinite"></a-animation>
-      <a-animation id="flamePos" attribute="position" from="0 0.85 0" to="0 0.9 0" direction="alternate" dur="500" repeat="indefinite"></a-animation>
-    </a-sphere>
+    <!-- 🕯️ Свічка -->
+    <a-entity mindar-image-target="targetIndex: 0" id="candleTarget">
 
-    <!-- Світло -->
-    <a-light id="flameLight" type="point" color="#ff9c00" intensity="1" distance="2" position="0 0.85 0">
-      <a-animation id="lightAnim" attribute="intensity" from="0.8" to="1.2" direction="alternate" dur="500" repeat="indefinite"></a-animation>
-    </a-light>
+      <!-- корпус свічки -->
+      <a-cylinder id="candle" position="0 0 0" radius="0.1" height="0.5" color="#fff5e1"></a-cylinder>
 
-    <!-- Контейнер для диму -->
-    <a-entity id="smokeContainer" position="0 0.9 0"></a-entity>
-  </a-entity>
+      <!-- полум’я -->
+      <a-sphere id="flame" position="0 0.35 0" radius="0.05" color="#ff9c00" emissive="#ff9c00" visible="true">
+        <a-animation attribute="scale" from="1 1 1" to="1.3 1.3 1.3"
+          direction="alternate" dur="500" repeat="indefinite"></a-animation>
+        <a-animation attribute="position" from="0 0.35 0" to="0 0.38 0"
+          direction="alternate" dur="500" repeat="indefinite"></a-animation>
+      </a-sphere>
 
-</a-scene>
+      <!-- світло від полум’я -->
+      <a-light id="flameLight" type="point" color="#ffb347" position="0 0.35 0" intensity="1" distance="2">
+        <a-animation attribute="intensity" from="0.8" to="1.2"
+          direction="alternate" dur="400" repeat="indefinite"></a-animation>
+      </a-light>
 
-<script>
-  let isLit = true;
-  const flame = document.querySelector('#flame');
-  const flameLight = document.querySelector('#flameLight');
-  const smokeContainer = document.querySelector('#smokeContainer');
+      <!-- дим -->
+      <a-entity id="smoke" visible="false">
+        <a-sphere position="0 0.45 0" radius="0.03" color="#cccccc" opacity="0.3">
+          <a-animation attribute="position" from="0 0.45 0" to="0 0.7 0"
+            dur="1000" easing="ease-out" repeat="indefinite"></a-animation>
+          <a-animation attribute="opacity" from="0.3" to="0"
+            dur="1000" repeat="indefinite"></a-animation>
+        </a-sphere>
+      </a-entity>
 
-  // Свічка: запалити/згасити
-  function toggleCandle() {
-    if(isLit) {
-      flame.setAttribute('visible', false);
-      flameLight.setAttribute('intensity', 0);
-      isLit = false;
-    } else {
-      flame.setAttribute('visible', true);
-      flameLight.setAttribute('intensity', 1);
-      isLit = true;
+      <a-text id="candleText" value="Пам’ятаємо 💛💙"
+              position="0 0.7 0" align="center"
+              color="#ffd580" width="2"></a-text>
+    </a-entity>
+
+    <a-sky color="#000"></a-sky>
+  </a-scene>
+
+  <script>
+    const flame = document.getElementById('flame');
+    const light = document.getElementById('flameLight');
+    const smoke = document.getElementById('smoke');
+    const scene = document.querySelector('a-scene');
+
+    let isLit = true;
+
+    function toggleCandle() {
+      if (isLit) {
+        // 💨 Згасання
+        flame.setAttribute('visible', false);
+        light.setAttribute('intensity', 0);
+        smoke.setAttribute('visible', true);
+        isLit = false;
+      } else {
+        // 🔥 Запалення
+        flame.setAttribute('visible', true);
+        light.setAttribute('intensity', 1);
+        smoke.setAttribute('visible', false);
+        isLit = true;
+      }
     }
-  }
 
-  document.querySelector('a-scene').addEventListener('click', toggleCandle);
+    // 🔁 Дотик — запалити або загасити
+    scene.addEventListener('click', toggleCandle);
 
-  // --- Дим ---
-  function createSmokeParticle() {
-    if (!isLit) return;
-    const particle = document.createElement('a-sphere');
-    const size = 0.03 + Math.random()*0.02;
-    particle.setAttribute('radius', size);
-    particle.setAttribute('color', '#ccc');
-    particle.setAttribute('opacity', 0.5);
-    particle.setAttribute('position', `${(Math.random()-0.5)*0.05} 0 0`);
-    particle.setAttribute('material', 'transparent:true');
+    // 👁️ Коли маркер знайдено
+    document.getElementById('candleTarget').addEventListener('targetFound', () => {
+      document.getElementById('loader').style.display = 'none';
+    });
 
-    smokeContainer.appendChild(particle);
-
-    // Анімація підйому і зникнення
-    particle.setAttribute('animation__rise', `property: position; to: ${particle.getAttribute('position').x} 0.4 ${particle.getAttribute('position').z}; dur: 1500; easing: linear`);
-    particle.setAttribute('animation__fade', 'property: opacity; to: 0; dur: 1500; easing: linear');
-
-    setTimeout(() => {
-      smokeContainer.removeChild(particle);
-    }, 1500);
-  }
-
-  // Створюємо дим кожні 200ms
-  setInterval(createSmokeParticle, 200);
-</script>
-
+    // 👻 Коли маркер зник
+    document.getElementById('candleTarget').addEventListener('targetLost', () => {
+      document.getElementById('loader').style.display = 'block';
+    });
+  </script>
 </body>
 </html>
