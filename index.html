@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>🎃 Гарбузове світло</title>
 
-  <!-- ✅ ВИПРАВЛЕНО: видалено зайві пробіли -->
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js" defer></script>
+  <!-- ✅ Сумісні версії без пробілів -->
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
 
   <style>
@@ -111,15 +111,24 @@
   </a-scene>
 
   <script>
-    window.addEventListener("load", async () => {
+    // Очікуємо повного завантаження A-Frame та MindAR
+    document.addEventListener('DOMContentLoaded', () => {
+      // Переконуємося, що AFRAME існує
+      if (typeof AFRAME === 'undefined') {
+        console.error('❌ AFRAME не завантажено. Перевірте підключення скриптів.');
+        return;
+      }
+
       const loader = document.getElementById("loader");
       const hint = document.getElementById("hint");
       const targetEntity = document.getElementById("target-entity");
-      const pumpkinLight = document.getElementById("pumpkinLight");
-      const glowSphere = document.getElementById("glowSphere");
 
       let isTargetVisible = false;
+      let audioContext = null;
+      let analyser = null;
+      let animationRunning = false;
 
+      // === Події від MindAR ===
       targetEntity.addEventListener("targetFound", () => {
         isTargetVisible = true;
         loader.style.display = "none";
@@ -131,20 +140,26 @@
         isTargetVisible = false;
         loader.style.display = "flex";
         hint.style.display = "none";
+        stopMic();
       });
 
+      // === Мікрофон ===
       async function initMic() {
+        if (audioContext) return; // вже запущено
+
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          const analyser = audioContext.createAnalyser();
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioContext.createAnalyser();
           const source = audioContext.createMediaStreamSource(stream);
           source.connect(analyser);
+          analyser.fftSize = 256;
 
           const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          animationRunning = true;
 
           function animateLight() {
-            if (!isTargetVisible) return;
+            if (!isTargetVisible || !animationRunning) return;
 
             analyser.getByteFrequencyData(dataArray);
             const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
@@ -152,9 +167,14 @@
             const intensity = Math.min(loudness * 3, 3);
             const glowSize = 1 + loudness * 0.8;
 
-            pumpkinLight.setAttribute("intensity", (0.2 + intensity).toFixed(2));
-            glowSphere.setAttribute("scale", `${glowSize} ${glowSize} ${glowSize}`);
-            glowSphere.setAttribute("material", { opacity: 0.2 + loudness * 0.3 });
+            const pumpkinLight = document.getElementById("pumpkinLight");
+            const glowSphere = document.getElementById("glowSphere");
+
+            if (pumpkinLight) pumpkinLight.setAttribute("intensity", (0.2 + intensity).toFixed(2));
+            if (glowSphere) {
+              glowSphere.setAttribute("scale", `${glowSize} ${glowSize} ${glowSize}`);
+              glowSphere.setAttribute("material", { opacity: 0.2 + loudness * 0.3 });
+            }
 
             requestAnimationFrame(animateLight);
           }
@@ -165,6 +185,17 @@
           alert("🎤 Дозволь доступ до мікрофона, щоб гарбуз ожив!");
         }
       }
+
+      function stopMic() {
+        animationRunning = false;
+        if (audioContext) {
+          audioContext.close().catch(console.error);
+          audioContext = null;
+        }
+      }
+
+      // Зупиняємо мікрофон при закритті сторінки
+      window.addEventListener('beforeunload', stopMic);
     });
   </script>
 </body>
