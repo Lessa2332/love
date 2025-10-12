@@ -57,8 +57,8 @@
   <div id="loader">🎃 Наведи камеру на маркер!</div>
   <div id="hint">🎤 Скажи щось гарбузу — він засвітиться!</div>
 
-  <!-- ✅ ВИПРАВЛЕНО: правильний порядок завантаження бібліотек -->
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+  <!-- ✅ СУМІСНІ ВЕРСІЇ -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.0/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <a-scene
@@ -112,20 +112,44 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Чекаємо, поки всі бібліотеки завантажаться
-      if (typeof AFRAME === 'undefined') {
-        console.error('AFrame не завантажено');
-        return;
-      }
-
       const loader = document.getElementById("loader");
       const hint = document.getElementById("hint");
       
-      // Чекаємо, поки A-Frame сцена буде готова
-      document.querySelector('a-scene').addEventListener('loaded', function() {
+      const scene = document.querySelector('a-scene');
+      
+      // Перевірка чи всі бібліотеки завантажились
+      function checkLibraries() {
+        if (typeof AFRAME === 'undefined') {
+          console.error('A-Frame не завантажено');
+          loader.innerHTML = '❌ Помилка: A-Frame не завантажено';
+          return false;
+        }
+        
+        if (typeof MINDAR === 'undefined') {
+          console.error('MindAR не завантажено');
+          loader.innerHTML = '❌ Помилка: MindAR не завантажено';
+          return false;
+        }
+        
+        return true;
+      }
+
+      if (checkLibraries()) {
+        scene.addEventListener('loaded', function() {
+          console.log('Сцена завантажена');
+          initApp();
+        });
+      }
+
+      function initApp() {
         const targetEntity = document.getElementById("target-entity");
         const pumpkinLight = document.getElementById("pumpkinLight");
         const glowSphere = document.getElementById("glowSphere");
+
+        if (!targetEntity) {
+          console.error('Не знайдено target-entity');
+          return;
+        }
 
         let isTargetVisible = false;
         let animationId = null;
@@ -133,6 +157,7 @@
         let analyser = null;
 
         targetEntity.addEventListener("targetFound", () => {
+          console.log('Маркер знайдено');
           isTargetVisible = true;
           loader.style.display = "none";
           hint.style.display = "block";
@@ -140,17 +165,23 @@
         });
 
         targetEntity.addEventListener("targetLost", () => {
+          console.log('Маркер втрачено');
           isTargetVisible = false;
           loader.style.display = "flex";
           hint.style.display = "none";
           
-          // Зупиняємо анімацію при втраті маркера
+          stopAnimation();
+          resetLights();
+        });
+
+        function stopAnimation() {
           if (animationId) {
             cancelAnimationFrame(animationId);
             animationId = null;
           }
-          
-          // Скидаємо значення світла
+        }
+
+        function resetLights() {
           if (pumpkinLight) {
             pumpkinLight.setAttribute("intensity", "0.4");
           }
@@ -158,12 +189,12 @@
             glowSphere.setAttribute("scale", "1 1 1");
             glowSphere.setAttribute("material", "opacity", "0.3");
           }
-        });
+        }
 
         async function initMic() {
           try {
-            // Зупиняємо попередній контекст, якщо він існує
-            if (audioContext) {
+            // Закриваємо попередній аудіо контекст, якщо він існує
+            if (audioContext && audioContext.state !== 'closed') {
               await audioContext.close();
             }
 
@@ -187,10 +218,7 @@
 
             function animateLight() {
               if (!isTargetVisible) {
-                if (animationId) {
-                  cancelAnimationFrame(animationId);
-                  animationId = null;
-                }
+                stopAnimation();
                 return;
               }
 
@@ -214,14 +242,13 @@
             animateLight();
           } catch (err) {
             console.error("🎤 Помилка мікрофона:", err);
-            // Більш дружнє повідомлення про помилку
-            setTimeout(() => {
-              alert("🎤 Не вдалося отримати доступ до мікрофона. Переконайтесь, що ви надали дозвіл на використання мікрофона.");
-            }, 1000);
+            hint.innerHTML = "🎤 Надай доступ до мікрофона!";
+            hint.style.display = "block";
           }
         }
-      });
+      }
     });
   </script>
 </body>
 </html>
+
