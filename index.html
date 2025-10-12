@@ -5,10 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>🕯️ Свічка пам’яті</title>
 
-  <!-- ✅ A-Frame -->
+  <!-- ✅ A-Frame (первинний URL, без defer) -->
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe.min.js"></script>
-
-  <!-- ✅ MindAR -->
+  <!-- Резервний URL на випадок невдачі -->
+  <script>
+    if (typeof AFRAME === 'undefined') {
+      document.write('<script src="https://unpkg.com/aframe@1.6.0/dist/aframe.min.js"><\/script>');
+    }
+  </script>
+  <!-- ✅ MindAR (з defer) -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
 
   <style>
@@ -51,41 +56,28 @@
 
     <!-- 🕯️ Свічка -->
     <a-entity mindar-image-target="targetIndex: 0" id="candleTarget">
-
       <!-- корпус -->
       <a-cylinder id="candle" position="0 0 0" radius="0.1" height="0.5" color="#fff5e1"></a-cylinder>
-
       <!-- гніт -->
       <a-cylinder position="0 0.27 0" radius="0.004" height="0.05" color="#333"></a-cylinder>
-
       <!-- полум’я -->
       <a-sphere id="flame" position="0 0.35 0" radius="0.05" color="#ff9c00" emissive="#ff9c00" visible="true">
-        <a-animation attribute="scale" from="1 1 1" to="1.3 1.3 1.3"
-          direction="alternate" dur="500" repeat="indefinite"></a-animation>
-        <a-animation attribute="position" from="0 0.35 0" to="0 0.38 0"
-          direction="alternate" dur="500" repeat="indefinite"></a-animation>
+        <a-animation attribute="scale" from="1 1 1" to="1.3 1.3 1.3" direction="alternate" dur="500" repeat="indefinite"></a-animation>
+        <a-animation attribute="position" from="0 0.35 0" to="0 0.38 0" direction="alternate" dur="500" repeat="indefinite"></a-animation>
       </a-sphere>
-
       <!-- світло -->
       <a-light id="flameLight" type="point" color="#ffb347" position="0 0.35 0" intensity="1" distance="2" decay="1">
-        <a-animation attribute="intensity" from="0.8" to="1.2"
-          direction="alternate" dur="400" repeat="indefinite"></a-animation>
+        <a-animation attribute="intensity" from="0.8" to="1.2" direction="alternate" dur="400" repeat="indefinite"></a-animation>
       </a-light>
-
       <!-- дим -->
       <a-entity id="smoke" visible="false">
         <a-sphere position="0 0.45 0" radius="0.03" color="#cccccc" opacity="0.3">
-          <a-animation attribute="position" from="0 0.45 0" to="0 0.7 0"
-            dur="1000" easing="ease-out" repeat="indefinite"></a-animation>
-          <a-animation attribute="opacity" from="0.3" to="0"
-            dur="1000" repeat="indefinite"></a-animation>
+          <a-animation attribute="position" from="0 0.45 0" to="0 0.7 0" dur="1000" easing="ease-out" repeat="indefinite"></a-animation>
+          <a-animation attribute="opacity" from="0.3" to="0" dur="1000" repeat="indefinite"></a-animation>
         </a-sphere>
       </a-entity>
-
       <!-- напис -->
-      <a-text id="candleText" value="Пам’ятаємо 💛💙"
-              position="0 0.7 0" align="center"
-              color="#ffd580" width="2" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+      <a-text id="candleText" value="Пам’ятаємо 💛💙" position="0 0.7 0" align="center" color="#ffd580" width="2" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
     </a-entity>
 
     <a-sky color="#000"></a-sky>
@@ -104,13 +96,11 @@
 
       function toggleCandle() {
         if (isLit) {
-          // 💨 Згасання
           flame.setAttribute('visible', false);
           light.setAttribute('intensity', 0);
           smoke.setAttribute('visible', true);
           isLit = false;
         } else {
-          // 🔥 Запалення
           flame.setAttribute('visible', true);
           light.setAttribute('intensity', 1);
           smoke.setAttribute('visible', false);
@@ -118,16 +108,13 @@
         }
       }
 
-      // 🔁 Дотик по сцені — запалити або загасити (для десктоп і мобільних)
       scene.addEventListener('click', toggleCandle);
       scene.addEventListener('touchstart', toggleCandle);
 
-      // 👁️ Коли маркер знайдено
       target.addEventListener('targetFound', () => {
         loader.style.display = 'none';
       });
 
-      // 👻 Коли маркер зник
       target.addEventListener('targetLost', () => {
         loader.style.display = 'block';
       });
