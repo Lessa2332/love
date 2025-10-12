@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>🎃 Гарбузове світло</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
-
   <style>
     body {
       margin: 0;
@@ -60,6 +57,10 @@
   <div id="loader">🎃 Наведи камеру на маркер!</div>
   <div id="hint">🎤 Скажи щось гарбузу — він засвітиться!</div>
 
+  <!-- ✅ ВИПРАВЛЕНО: правильний порядок завантаження бібліотек -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
   <a-scene
     mindar-image="imageTargetSrc: ./targets.mind; autoStart: true;"
     color-space="sRGB"
@@ -73,7 +74,7 @@
       <a-asset-item id="pumpkinModel" src="./pumpkin.glb"></a-asset-item>
     </a-assets>
 
-    <a-camera position="0 0 0.8" active="true"></a-camera>
+    <a-camera position="0 0 0" active="true"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0" id="target-entity">
       <a-gltf-model
@@ -110,79 +111,116 @@
   </a-scene>
 
   <script>
-    window.addEventListener("load", async () => {
+    document.addEventListener('DOMContentLoaded', function() {
+      // Чекаємо, поки всі бібліотеки завантажаться
+      if (typeof AFRAME === 'undefined') {
+        console.error('AFrame не завантажено');
+        return;
+      }
+
       const loader = document.getElementById("loader");
       const hint = document.getElementById("hint");
-      const targetEntity = document.getElementById("target-entity");
-      const pumpkinLight = document.getElementById("pumpkinLight");
-      const glowSphere = document.getElementById("glowSphere");
+      
+      // Чекаємо, поки A-Frame сцена буде готова
+      document.querySelector('a-scene').addEventListener('loaded', function() {
+        const targetEntity = document.getElementById("target-entity");
+        const pumpkinLight = document.getElementById("pumpkinLight");
+        const glowSphere = document.getElementById("glowSphere");
 
-      let isTargetVisible = false;
-      let animationId = null;
+        let isTargetVisible = false;
+        let animationId = null;
+        let audioContext = null;
+        let analyser = null;
 
-      targetEntity.addEventListener("targetFound", () => {
-        isTargetVisible = true;
-        loader.style.display = "none";
-        hint.style.display = "block";
-        initMic();
-      });
+        targetEntity.addEventListener("targetFound", () => {
+          isTargetVisible = true;
+          loader.style.display = "none";
+          hint.style.display = "block";
+          initMic();
+        });
 
-      targetEntity.addEventListener("targetLost", () => {
-        isTargetVisible = false;
-        loader.style.display = "flex";
-        hint.style.display = "none";
-        
-        // Зупиняємо анімацію при втраті маркера
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-          animationId = null;
-        }
-        
-        // Скидаємо значення світла
-        pumpkinLight.setAttribute("intensity", "0.4");
-        glowSphere.setAttribute("scale", "1 1 1");
-        glowSphere.setAttribute("material", "opacity", "0.3");
-      });
+        targetEntity.addEventListener("targetLost", () => {
+          isTargetVisible = false;
+          loader.style.display = "flex";
+          hint.style.display = "none";
+          
+          // Зупиняємо анімацію при втраті маркера
+          if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+          }
+          
+          // Скидаємо значення світла
+          if (pumpkinLight) {
+            pumpkinLight.setAttribute("intensity", "0.4");
+          }
+          if (glowSphere) {
+            glowSphere.setAttribute("scale", "1 1 1");
+            glowSphere.setAttribute("material", "opacity", "0.3");
+          }
+        });
 
-      async function initMic() {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          const analyser = audioContext.createAnalyser();
-          analyser.fftSize = 256;
-          const source = audioContext.createMediaStreamSource(stream);
-          source.connect(analyser);
-
-          const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-          function animateLight() {
-            if (!isTargetVisible) {
-              if (animationId) {
-                cancelAnimationFrame(animationId);
-                animationId = null;
-              }
-              return;
+        async function initMic() {
+          try {
+            // Зупиняємо попередній контекст, якщо він існує
+            if (audioContext) {
+              await audioContext.close();
             }
 
-            analyser.getByteFrequencyData(dataArray);
-            const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-            const loudness = Math.min(avg / 80, 1); // Обмежуємо значення до 1
-            const intensity = Math.min(loudness * 3, 3);
-            const glowSize = 1 + loudness * 0.8;
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: false
+              } 
+            });
+            
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.8;
+            
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
 
-            pumpkinLight.setAttribute("intensity", (0.2 + intensity).toFixed(2));
-            glowSphere.setAttribute("scale", `${glowSize} ${glowSize} ${glowSize}`);
-            glowSphere.setAttribute("material", "opacity", (0.2 + loudness * 0.3).toFixed(2));
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-            animationId = requestAnimationFrame(animateLight);
+            function animateLight() {
+              if (!isTargetVisible) {
+                if (animationId) {
+                  cancelAnimationFrame(animationId);
+                  animationId = null;
+                }
+                return;
+              }
+
+              analyser.getByteFrequencyData(dataArray);
+              const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+              const loudness = Math.min(avg / 80, 1);
+              const intensity = Math.min(0.2 + loudness * 3, 3);
+              const glowSize = 1 + loudness * 0.8;
+
+              if (pumpkinLight) {
+                pumpkinLight.setAttribute("intensity", intensity.toFixed(2));
+              }
+              if (glowSphere) {
+                glowSphere.setAttribute("scale", `${glowSize} ${glowSize} ${glowSize}`);
+                glowSphere.setAttribute("material", "opacity", (0.2 + loudness * 0.3).toFixed(2));
+              }
+
+              animationId = requestAnimationFrame(animateLight);
+            }
+
+            animateLight();
+          } catch (err) {
+            console.error("🎤 Помилка мікрофона:", err);
+            // Більш дружнє повідомлення про помилку
+            setTimeout(() => {
+              alert("🎤 Не вдалося отримати доступ до мікрофона. Переконайтесь, що ви надали дозвіл на використання мікрофона.");
+            }, 1000);
           }
-
-          animateLight();
-        } catch (err) {
-          console.error("🎤 Помилка мікрофона:", err);
-          alert("🎤 Дозволь доступ до мікрофона, щоб гарбуз ожив!");
         }
-      }
+      });
     });
   </script>
 </body>
