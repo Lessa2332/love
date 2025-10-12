@@ -5,14 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>🕯️ Свічка пам’яті</title>
 
-  <!-- ✅ A-Frame (первинний URL, без defer) -->
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe.min.js"></script>
-  <!-- Резервний URL на випадок невдачі -->
-  <script>
-    if (typeof AFRAME === 'undefined') {
-      document.write('<script src="https://unpkg.com/aframe@1.6.0/dist/aframe.min.js"><\/script>');
-    }
-  </script>
+  <!-- ✅ A-Frame (статичне підключення, без defer) -->
+  <script src="https://unpkg.com/aframe@1.6.0/dist/aframe.min.js"></script>
   <!-- ✅ MindAR (з defer) -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
 
