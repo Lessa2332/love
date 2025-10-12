@@ -1,467 +1,213 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎃 Гарбуз-Веселунчик</title>
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        /* Стилі для UI та AR */
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
-            text-transform: none;
-            background: transparent;
-            touch-action: none;
-        }
-        a-scene {
-            width: 100vw !important;
-            height: 100vh !important;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background: transparent;
-        }
-        .arjs-loader {
-            height: 100%;
-            width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            background: linear-gradient(135deg, #FF6B35, #FF8E53);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #8B4513;
-            font-size: clamp(1.1em, 4vw, 1.3em);
-            text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
-            font-family: 'Comic Neue', sans-serif;
-        }
-        .ui-btn {
-            position: fixed;
-            padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 15px);
-            border-radius: 15px;
-            font-size: clamp(0.9em, 3.5vw, 1.1em);
-            font-weight: bold;
-            z-index: 1000;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 2px solid white;
-            display: none;
-            font-family: 'Comic Neue', sans-serif;
-            text-align: center;
-            width: clamp(35%, 40vw, 45%);
-            max-width: 200px;
-            animation: pulse 2s infinite;
-        }
-        .ui-btn:hover, .ui-btn:active {
-            transform: scale(1.05);
-        }
-        #soundBtn { 
-            top: clamp(10px, 2vh, 15px); 
-            left: clamp(10px, 2vw, 15px); 
-            background: linear-gradient(40deg, #FF6B35, #FF4500); 
-            color: white; 
-        }
-        #listenVoiceBtn {
-            top: clamp(10px, 2vh, 15px);
-            right: clamp(10px, 2vw, 15px);
-            background: linear-gradient(45deg, #8B4513, #A0522D);
-            color: white;
-        }
-        .corner-btn {
-            position: fixed;
-            bottom: clamp(10px, 2vh, 15px);
-            padding: clamp(6px, 1.5vw, 8px) clamp(10px, 2.5vw, 12px);
-            border-radius: 20px;
-            font-size: clamp(0.8em, 3vw, 0.9em);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            display: none;
-            font-family: 'Comic Neue';
-            z-index: 1100;
-            text-decoration: none;
-            animation: pulse 2s infinite;
-        }
-        #youtubeBtn { 
-            left: clamp(10px, 2vw, 15px); 
-            background: linear-gradient(45deg, #FF6B35, #FF8E53); 
-            color: white; 
-        }
-        #aboutBtn { 
-            right: clamp(10px, 2vw, 15px); 
-            background: linear-gradient(45deg, #8B4513, #A0522D); 
-            color: white; 
-        }
-        .ui-info-text {
-            position: fixed;
-            left: clamp(8px, 2vw, 10px);
-            top: clamp(8px, 2vh, 10px);
-            z-index: 500;
-            font-family: 'Comic Neue';
-            text-align: left;
-            font-weight: bold;
-            text-shadow: 2px 2px 6px rgba(255, 255, 255, 0.7);
-            color: #8B4513;
-            font-size: clamp(1.1em, 4vw, 1.3em);
-            background: rgba(255, 255, 255, 0.7);
-            padding: 6px 12px;
-            border-radius: 12px;
-        }
-        #endMessage {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #FF6B35, #8B4513);
-            color: white;
-            padding: clamp(12px, 3vw, 15px);
-            border-radius: 15px;
-            z-index: 10000;
-            font-size: clamp(1.1em, 4.5vw, 1.4em);
-            text-align: center;
-            font-family: 'Comic Neue';
-            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
-            display: none;
-            max-width: 85%;
-            width: 85%;
-            border: 2px solid #FFD700;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
-            100% { transform: translateY(0px); }
-        }
-        .floating {
-            animation: float 3s ease-in-out infinite;
-        }
-        .halloween-text {
-            color: #FF6B35;
-            text-shadow: 2px 2px 4px rgba(139, 69, 19, 0.5);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>🕯️ Свічка Пам’яті</title>
+
+  <!-- A-Frame + MindAR -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: 'Inter', sans-serif;
+    }
+    #hint {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px 16px;
+      border-radius: 20px;
+      font-size: 16px;
+      text-align: center;
+      max-width: 90%;
+      z-index: 1000;
+    }
+    #ui {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      text-align: center;
+    }
+    button {
+      background: #d4af37;
+      color: black;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { background: #555; color: #aaa; cursor: not-allowed; }
+  </style>
 </head>
 <body>
-    <div class="arjs-loader" id="loader">
-        <div class="pulse floating">🎃 Знайди Гарбуза!</div>
-        <div style="margin-top: clamp(8px, 1.5vh, 12px); font-size: clamp(0.9em, 3.5vw, 1.1em); font-weight: bold; color: #8B4513;">
-            ❗ Наведи камеру на картку!
-        </div>
-        <div style="margin-top: clamp(4px, 0.8vh, 6px); font-size: clamp(0.7em, 2.5vw, 0.9em);">
-            Покрути гарбуза пальчиком! 👻
-        </div>
-    </div>
+  <div id="hint">Наведіть камеру на маркер пам’яті</div>
+  <div id="ui">
+    <button id="speakBtn" disabled>🕯️ Проговоріть подяку</button>
+  </div>
 
-    <div id="endMessage"></div>
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; autoStart: true;"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    embedded
+    renderer="colorManagement: true; alpha: true;"
+  >
+    <a-assets>
+      <a-asset-item id="candleModel" src="candle.glb"></a-asset-item>
+      <audio id="gratitudeSound" src="message.mp3" preload="auto"></audio>
+    </a-assets>
 
-    <a-scene
-        mindar-image="imageTargetSrc: targets.mind; autoStart: true; maxTrackTime: 10000;"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false"
-        loading-screen="enabled: false"
-        embedded
-        renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true;"
-        touch-gestures="targetId: pumpkin-model; initialScale: 0.3; minScale: 0.15; maxScale: 1.0; rotationSpeed: 0.5;"
-    >
-        <a-assets>
-            <a-asset-item id="pumpkinModel" src="pumpkinglib"></a-asset-item>
-            <audio id="bg-music" src="assets/audio/halloween-theme.mp3" preload="auto" loop muted playsinline crossorigin="anonymous"></audio>
-            <audio id="spookySound" src="assets/audio/spooky.mp3" preload="auto" muted playsinline crossorigin="anonymous"></audio>
-            <audio id="pumpkinClickSound" src="assets/audio/pumpkin-click.mp3" preload="auto" muted playsinline crossorigin="anonymous"></audio>
-            <audio id="pumpkinVoiceSound" src="assets/audio/pumpkin-voice.mp3" preload="auto" muted playsinline crossorigin="anonymous"></audio>
-        </a-assets>
-        
-        <!-- Хелловінське освітлення -->
-        <a-entity light="type: ambient; color: #FF6B35; intensity: 0.6"></a-entity>
-        <a-entity light="type: directional; color: #FFD700; intensity: 0.8" position="1 1 1"></a-entity>
-        <a-entity light="type: point; color: #FF4500; intensity: 0.5; distance: 5" position="0 2 0"></a-entity>
-        
-        <a-camera look-controls="enabled: false" position="0 0 0">
-            <a-cursor
-                raycaster="objects: .clickable;"
-                cursor="fuse: false; maxDistance: 10"
-                position="0 0 -1"
-                geometry="primitive: ring; radiusOuter: 0.015; radiusInner: 0.008"
-                material="color: #FF6B35; shader: flat"
-            ></a-cursor>
-        </a-camera>
-        <a-entity mindar-image-target="targetIndex: 0" id="target-entity">
-            <a-gltf-model
-                id="pumpkin-model"
-                class="clickable"
-                src="#pumpkinModel"
-                scale="0.3 0.3 0.3"
-                position="0 0 0.1"
-                rotation="0 0 0"
-                shadow
-                animation-mixer="clip: Idle; loop: repeat; timeScale: 1.0; autoplay: true;"
-            ></a-gltf-model>
-        </a-entity>
-    </a-scene>
-    
-    <button id="soundBtn" class="ui-btn">🔊 Звук</button>
-    
-    <a href="https://www.youtube.com/@23smartlessa32?si=d3NhKDot8U8Mc2Hi" id="youtubeBtn" class="corner-btn" target="_blank" rel="noopener noreferrer">❤️ Автор</a>
-    <a href="https://nikadent-family.com.ua/ua/" id="aboutBtn" class="corner-btn" target="_blank" rel="noopener noreferrer">ℹ️ Про нас</a>
-    <button id="listenVoiceBtn" class="ui-btn">👂 Слухати</button>
+    <a-camera position="0 0 0.8"></a-camera>
 
-    <script>
-        // === ІНІЦІАЛІЗАЦІЯ ЗМІННИХ ТА АДАПТАЦІЯ AR ===
+    <a-entity mindar-image-target="targetIndex: 0" id="candleTarget">
+      <!-- Свічка з Sketchfab -->
+      <a-gltf-model src="#candleModel" position="0 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
 
-        function fixHeight() { document.documentElement.style.height = window.innerHeight + 'px'; }
-        fixHeight();
-        window.addEventListener('resize', fixHeight);
+      <!-- Полум’я (анімоване через scale + колір) -->
+      <a-entity
+        id="flame"
+        geometry="primitive: sphere; radius: 0.06;"
+        material="color: #ffaa00; emissive: #ff5500; emissiveIntensity: 1; opacity: 0.85; transparent: true; blending: additive;"
+        position="0 0.18 0"
+        scale="1 1.3 1"
+      ></a-entity>
 
-        const AScene = document.querySelector('a-scene');
-        const loader = document.querySelector('#loader');
-        const targetEntity = document.querySelector('#target-entity');
-        const pumpkinModel = document.querySelector('#pumpkin-model');
-        
-        // КНОПКИ
-        const soundBtn = document.querySelector('#soundBtn');
-        const listenVoiceBtn = document.querySelector('#listenVoiceBtn');
-        const youtubeBtn = document.querySelector('#youtubeBtn');
-        const aboutBtn = document.querySelector('#aboutBtn');
-        const endMessage = document.getElementById('endMessage');
+      <!-- Світло від полум’я -->
+      <a-light
+        id="flameLight"
+        type="point"
+        color="#ffcc88"
+        intensity="0.3"
+        distance="1.2"
+        decay="2"
+        position="0 0.18 0"
+      ></a-light>
+    </a-entity>
 
-        // АУДІО
-        const bgMusic = document.querySelector('#bg-music');
-        const spookySound = document.querySelector('#spookySound');
-        const pumpkinClickSound = document.querySelector('#pumpkinClickSound');
-        const pumpkinVoiceSound = document.querySelector('#pumpkinVoiceSound');
+    <a-sky color="#000000"></a-sky>
+  </a-scene>
 
-        // СТАНИ
-        let isTargetVisible = false;
-        let wasBgMusicPlaying = false; 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const speakBtn = document.getElementById('speakBtn');
+      const flame = document.getElementById('flame');
+      const flameLight = document.getElementById('flameLight');
+      const candleTarget = document.getElementById('candleTarget');
+      const gratitudeAudio = document.getElementById('gratitudeSound');
 
-        // Початкове налаштування звуку
-        [bgMusic, spookySound, pumpkinClickSound, pumpkinVoiceSound].forEach(a => a.muted = true);
-        soundBtn.textContent = "🔊 Звук"; 
-        
-        // === КОМПОНЕНТ ДЛЯ ОБРОБКИ СЕНСОРНИХ ЖЕСТІВ ===
+      let isTargetVisible = false;
+      let recognition = null;
 
-        AFRAME.registerComponent('touch-gestures', {
-            schema: {
-                targetId: { type: 'string', default: 'pumpkin-model' },
-                initialScale: { type: 'number', default: 0.3 }, 
-                minScale: { type: 'number', default: 0.15 },
-                maxScale: { type: 'number', default: 1.0 },
-                rotationSpeed: { type: 'number', default: 0.5 }
-            },
-            init: function () {
-                this.isRotating = false;
-                this.isPinching = false;
-                this.startPos = { x: 0, y: 0 };
-                this.currentScale = this.data.initialScale;
-                this.targetEl = document.querySelector('#' + this.data.targetId);
+      // SpeechRecognition (працює в Chrome/Edge)
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'uk-UA';
+        recognition.continuous = false;
+        recognition.interimResults = false;
 
-                if (!this.targetEl) {
-                    console.error('Цільова 3D модель не знайдена в компоненті touch-gestures');
-                    return;
-                }
-                
-                const scale = this.data.initialScale;
-                this.targetEl.object3D.scale.set(scale, scale, scale);
-                
-                const targetArea = this.el.sceneEl; 
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript.toLowerCase().trim();
+          console.log('Розпізнано:', transcript);
 
-                targetArea.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    if (e.touches.length === 1) {
-                        this.isRotating = true;
-                        this.startPos.x = e.touches[0].pageX;
-                        this.startPos.y = e.touches[0].pageY;
-                    } else if (e.touches.length === 2) {
-                        this.isPinching = true;
-                        this.isRotating = false;
-                        this.initialDistance = Math.hypot(
-                            e.touches[0].pageX - e.touches[1].pageX,
-                            e.touches[0].pageY - e.touches[1].pageY
-                        );
-                        this.currentScale = this.targetEl.object3D.scale.x;
-                    }
-                }, { passive: false });
+          if (
+            transcript.includes('дякую захиснику') ||
+            transcript.includes('дякую вам') ||
+            transcript.includes('слава героям') ||
+            transcript.includes('вічная пам’ять') ||
+            transcript.includes('дякую')
+          ) {
+            activateCandle();
+          }
+        };
 
-                targetArea.addEventListener('touchmove', (e) => {
-                    e.preventDefault();
-                    if (this.isPinching && e.touches.length === 2) {
-                        const currentDistance = Math.hypot(
-                            e.touches[0].pageX - e.touches[1].pageX,
-                            e.touches[0].pageY - e.touches[1].pageY
-                        );
-                        const scaleFactor = currentDistance / this.initialDistance;
-                        let newScale = this.currentScale * scaleFactor;
+        recognition.onerror = () => {
+          speakBtn.disabled = false;
+          speakBtn.textContent = '🕯️ Проговоріть подяку';
+        };
 
-                        newScale = Math.max(this.data.minScale, Math.min(this.data.maxScale, newScale));
-                        
-                        this.targetEl.object3D.scale.set(newScale, newScale, newScale);
-                    } else if (this.isRotating && e.touches.length === 1) {
-                        const deltaX = (e.touches[0].pageX - this.startPos.x) * this.data.rotationSpeed;
-                        const deltaY = (e.touches[0].pageY - this.startPos.y) * this.data.rotationSpeed;
-                        
-                        this.targetEl.object3D.rotation.y += THREE.MathUtils.degToRad(deltaX);
-                        this.targetEl.object3D.rotation.x += THREE.MathUtils.degToRad(deltaY);
+        recognition.onend = () => {
+          speakBtn.disabled = false;
+          speakBtn.textContent = '🕯️ Проговоріть подяку';
+        };
+      } else {
+        speakBtn.textContent = '❌ Мікрофон не підтримується';
+        speakBtn.disabled = true;
+      }
 
-                        this.startPos.x = e.touches[0].pageX;
-                        this.startPos.y = e.touches[0].pageY;
-                    }
-                }, { passive: false });
+      // Події маркера
+      candleTarget.addEventListener('targetFound', () => {
+        isTargetVisible = true;
+        speakBtn.disabled = false;
+      });
 
-                targetArea.addEventListener('touchend', () => {
-                    this.isRotating = false;
-                    this.isPinching = false;
-                });
-            }
+      candleTarget.addEventListener('targetLost', () => {
+        isTargetVisible = false;
+        speakBtn.disabled = true;
+      });
+
+      // Активація свічки
+      function activateCandle() {
+        // Анімація полум’я
+        flame.setAttribute('animation__scale', {
+          property: 'scale',
+          to: '1.8 2.6 1.8',
+          dur: 1000,
+          easing: 'easeOutQuad'
         });
 
-        // === ВЗАЄМОДІЯ З МОДЕЛЛЮ ===
-        
-        pumpkinModel.addEventListener('click', () => {
-            if (!pumpkinClickSound.muted) {
-                pumpkinClickSound.currentTime = 0;
-                pumpkinClickSound.play().catch(e => console.log("🔇 Звук не запустився:", e));
-            }
-            const currentScale = pumpkinModel.object3D.scale.x;
-            pumpkinModel.setAttribute('animation__pulse', {
-                property: 'scale',
-                to: `${currentScale * 1.2} ${currentScale * 1.2} ${currentScale * 1.2}`,
-                dur: 200,
-                dir: 'alternate',
-                loop: 2
-            });
-            
-            // Хелловінські повідомлення
-            const messages = [
-                "🎃 Бууу! Веселого Хелловіна! 👻",
-                "🎃 Я - веселий гарбуз! Покрути мене! 🕷️",
-                "🎃 Страшно крутиться? Це ж Хелловін! 🦇",
-                "🎃 Знайшов мене? Тепер ми друзі! 🕸️"
-            ];
-            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-            
-            endMessage.textContent = randomMessage;
-            endMessage.style.display = 'block';
-            setTimeout(() => { endMessage.style.display = 'none'; }, 3000);
+        // Анімація світла
+        flameLight.setAttribute('animation__intensity', {
+          property: 'intensity',
+          to: '1.3',
+          dur: 1000,
+          easing: 'easeOutQuad'
         });
 
-        // === КЕРУВАННЯ UI ТА AR ===
+        // Відтворення звуку
+        gratitudeAudio.currentTime = 0;
+        gratitudeAudio.volume = 0.7;
+        gratitudeAudio.play().catch(e => console.warn('Звук заблоковано:', e));
 
-        function updateUIOnTarget() {
-            [youtubeBtn, aboutBtn, soundBtn, listenVoiceBtn].forEach(btn => btn.style.display = 'none');
-            loader.style.display = 'none';
-            
-            if (isTargetVisible) {
-                youtubeBtn.style.display = 'block';
-                aboutBtn.style.display = 'block';
-                soundBtn.style.display = 'block';
-                listenVoiceBtn.style.display = 'block';
-            } else {
-                loader.style.display = 'flex';
-            }
-        }
+        // Тимчасове повідомлення
+        const msg = document.createElement('div');
+        msg.style.cssText = `
+          position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+          color: #ffd700; font-size: 24px; font-weight: bold;
+          background: rgba(0,0,0,0.7); padding: 12px 24px; border-radius: 12px;
+          z-index: 2000; pointer-events: none;
+        `;
+        msg.textContent = '🕯️ Дякую…';
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
+      }
 
-        targetEntity.addEventListener('targetFound', () => {
-            isTargetVisible = true;
-            pumpkinModel.object3D.visible = true;
-            updateUIOnTarget();
-            if (!bgMusic.muted && wasBgMusicPlaying && pumpkinVoiceSound.paused) {
-                 bgMusic.play().catch(e => console.log("🔇 Музика не запустилася:", e));
-            }
-            
-            // Додаємо спецефект при знаходженні цілі
-            if (!spookySound.muted) {
-                spookySound.currentTime = 0;
-                spookySound.play().catch(e => console.log("🔇 Страшний звук не запустився:", e));
-            }
-        });
+      // Запуск голосу
+      speakBtn.addEventListener('click', () => {
+        if (!recognition || !isTargetVisible) return;
+        speakBtn.disabled = true;
+        speakBtn.textContent = '🎙️ Говоріть…';
+        recognition.start();
+      });
+    });
+  </script>
 
-        targetEntity.addEventListener('targetLost', () => {
-            isTargetVisible = false;
-            wasBgMusicPlaying = !bgMusic.muted && !bgMusic.paused;
-            if (!bgMusic.paused) bgMusic.pause();
-            updateUIOnTarget();
-        });
-
-        updateUIOnTarget(); 
-
-        // === КЕРУВАННЯ ЗВУКОМ ===
-
-        function toggleSound() {
-            const isMuted = !bgMusic.muted;
-            [bgMusic, spookySound, pumpkinClickSound, pumpkinVoiceSound].forEach(a => a.muted = isMuted);
-            soundBtn.textContent = isMuted ? "🔊 Звук" : "🔇 Без звуку";
-
-            if (!isMuted && isTargetVisible && pumpkinVoiceSound.paused) {
-                bgMusic.play().catch(e => console.log("🔇 Музика не запустилася:", e));
-                wasBgMusicPlaying = true;
-            } else if (isMuted) {
-                bgMusic.pause();
-                wasBgMusicPlaying = false;
-            }
-        }
-        soundBtn.addEventListener('click', toggleSound);
-
-        // Кнопка "Слухати" - грає pumpkin-voice.mp3 один раз
-        listenVoiceBtn.addEventListener('click', () => {
-            if (isTargetVisible) {
-                if (!pumpkinVoiceSound.muted) {
-                    // Пауза фонової музики
-                    if (!bgMusic.paused) {
-                        bgMusic.pause();
-                        wasBgMusicPlaying = true;
-                    }
-                    pumpkinVoiceSound.currentTime = 0;
-                    pumpkinVoiceSound.loop = false;
-                    pumpkinVoiceSound.play().catch(e => console.log("🔇 Голос Гарбуза не запустився:", e));
-                    // Відновлення фонової музики після завершення
-                    pumpkinVoiceSound.onended = () => {
-                        if (!bgMusic.muted && wasBgMusicPlaying && isTargetVisible) {
-                            bgMusic.play().catch(e => console.log("🔇 Музика не відновилася:", e));
-                        }
-                    };
-                }
-            }
-        });
-
-        // Додаємо хелловінську атмосферу
-        document.addEventListener('DOMContentLoaded', function() {
-            // Додаємо падаючі листочки чи павутинку на фон
-            const style = document.createElement('style');
-            style.textContent = `
-                body::before {
-                    content: '';
-                    position: fixed;
-                    top: -50%;
-                    left: -50%;
-                    width: 200%;
-                    height: 200%;
-                    background: 
-                        radial-gradient(circle at 20% 30%, rgba(255, 107, 53, 0.1) 2%, transparent 5%),
-                        radial-gradient(circle at 80% 70%, rgba(139, 69, 19, 0.1) 2%, transparent 5%),
-                        radial-gradient(circle at 40% 80%, rgba(255, 69, 0, 0.1) 2%, transparent 5%);
-                    animation: float 20s infinite linear;
-                    pointer-events: none;
-                    z-index: -1;
-                }
-            `;
-            document.head.appendChild(style);
-        });
-    </script>
+  <!-- Атрибуція -->
+  <!-- 3D model "Candle" by [author name] via Sketchfab, CC BY 4.0 -->
+  <!-- https://sketchfab.com/3d-models/candle-c408586d8c1547448c4ff47abb4fb981 -->
 </body>
 </html>
