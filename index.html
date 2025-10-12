@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>🎃 Гарбузове світло</title>
 
-  <!-- Підключаємо бібліотеки БЕЗ пробілів і з defer -->
+  <!-- ✅ ВИПРАВЛЕНО: видалено зайві пробіли -->
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
 
@@ -111,7 +111,6 @@
   </a-scene>
 
   <script>
-    // === Очікуємо, поки DOM і скрипти завантажаться ===
     window.addEventListener("load", async () => {
       const loader = document.getElementById("loader");
       const hint = document.getElementById("hint");
@@ -121,12 +120,11 @@
 
       let isTargetVisible = false;
 
-      // === Події від MindAR ===
       targetEntity.addEventListener("targetFound", () => {
         isTargetVisible = true;
         loader.style.display = "none";
         hint.style.display = "block";
-        initMic(); // запускаємо мікрофон лише коли маркер знайдено
+        initMic();
       });
 
       targetEntity.addEventListener("targetLost", () => {
@@ -135,7 +133,6 @@
         hint.style.display = "none";
       });
 
-      // === Мікрофон (як у вашому коді) ===
       async function initMic() {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -147,7 +144,7 @@
           const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
           function animateLight() {
-            if (!isTargetVisible) return; // не оновлюємо, якщо маркер втрачено
+            if (!isTargetVisible) return;
 
             analyser.getByteFrequencyData(dataArray);
             const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
@@ -172,5 +169,3 @@
   </script>
 </body>
 </html>
-
-
