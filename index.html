@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe.min.js"></script>
 
   <!-- ✅ MindAR -->
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
 
   <style>
     body {
@@ -38,7 +38,7 @@
   <div id="loader">🕯️ Наведи камеру на маркер</div>
 
   <a-scene
-    mindar-image="imageTargetSrc: ./targets.mind; autoStart: true;"
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; showStats: true;"
     color-space="sRGB"
     embedded
     vr-mode-ui="enabled: false"
@@ -47,7 +47,7 @@
   >
     <a-assets></a-assets>
 
-    <a-camera position="0 0 0.8"></a-camera>
+    <a-camera position="0 0 1.5"></a-camera>
 
     <!-- 🕯️ Свічка -->
     <a-entity mindar-image-target="targetIndex: 0" id="candleTarget">
@@ -67,7 +67,7 @@
       </a-sphere>
 
       <!-- світло -->
-      <a-light id="flameLight" type="point" color="#ffb347" position="0 0.35 0" intensity="1" distance="2">
+      <a-light id="flameLight" type="point" color="#ffb347" position="0 0.35 0" intensity="1" distance="2" decay="1">
         <a-animation attribute="intensity" from="0.8" to="1.2"
           direction="alternate" dur="400" repeat="indefinite"></a-animation>
       </a-light>
@@ -85,49 +85,52 @@
       <!-- напис -->
       <a-text id="candleText" value="Пам’ятаємо 💛💙"
               position="0 0.7 0" align="center"
-              color="#ffd580" width="2"></a-text>
+              color="#ffd580" width="2" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
     </a-entity>
 
     <a-sky color="#000"></a-sky>
   </a-scene>
 
   <script>
-    const flame = document.getElementById('flame');
-    const light = document.getElementById('flameLight');
-    const smoke = document.getElementById('smoke');
-    const scene = document.querySelector('a-scene');
-    const loader = document.getElementById('loader');
-    const target = document.getElementById('candleTarget');
+    document.addEventListener('DOMContentLoaded', () => {
+      const flame = document.getElementById('flame');
+      const light = document.getElementById('flameLight');
+      const smoke = document.getElementById('smoke');
+      const scene = document.querySelector('a-scene');
+      const loader = document.getElementById('loader');
+      const target = document.getElementById('candleTarget');
 
-    let isLit = true;
+      let isLit = true;
 
-    function toggleCandle() {
-      if (isLit) {
-        // 💨 Згасання
-        flame.setAttribute('visible', false);
-        light.setAttribute('intensity', 0);
-        smoke.setAttribute('visible', true);
-        isLit = false;
-      } else {
-        // 🔥 Запалення
-        flame.setAttribute('visible', true);
-        light.setAttribute('intensity', 1);
-        smoke.setAttribute('visible', false);
-        isLit = true;
+      function toggleCandle() {
+        if (isLit) {
+          // 💨 Згасання
+          flame.setAttribute('visible', false);
+          light.setAttribute('intensity', 0);
+          smoke.setAttribute('visible', true);
+          isLit = false;
+        } else {
+          // 🔥 Запалення
+          flame.setAttribute('visible', true);
+          light.setAttribute('intensity', 1);
+          smoke.setAttribute('visible', false);
+          isLit = true;
+        }
       }
-    }
 
-    // 🔁 Дотик по сцені — запалити або загасити
-    scene.addEventListener('click', toggleCandle);
+      // 🔁 Дотик по сцені — запалити або загасити (для десктоп і мобільних)
+      scene.addEventListener('click', toggleCandle);
+      scene.addEventListener('touchstart', toggleCandle);
 
-    // 👁️ Коли маркер знайдено
-    target.addEventListener('targetFound', () => {
-      loader.style.display = 'none';
-    });
+      // 👁️ Коли маркер знайдено
+      target.addEventListener('targetFound', () => {
+        loader.style.display = 'none';
+      });
 
-    // 👻 Коли маркер зник
-    target.addEventListener('targetLost', () => {
-      loader.style.display = 'block';
+      // 👻 Коли маркер зник
+      target.addEventListener('targetLost', () => {
+        loader.style.display = 'block';
+      });
     });
   </script>
 </body>
