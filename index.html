@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe.min.js"></script>
 
   <!-- ✅ MindAR -->
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
     body {
@@ -29,6 +29,7 @@
       border-radius: 10px;
       font-size: 18px;
       z-index: 999;
+      text-align: center;
     }
   </style>
 </head>
@@ -37,7 +38,7 @@
   <div id="loader">🕯️ Наведи камеру на маркер</div>
 
   <a-scene
-    mindar-image="imageTargetSrc: ./marker.mind; autoStart: true;"
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: true;"
     color-space="sRGB"
     embedded
     vr-mode-ui="enabled: false"
@@ -51,8 +52,11 @@
     <!-- 🕯️ Свічка -->
     <a-entity mindar-image-target="targetIndex: 0" id="candleTarget">
 
-      <!-- корпус свічки -->
+      <!-- корпус -->
       <a-cylinder id="candle" position="0 0 0" radius="0.1" height="0.5" color="#fff5e1"></a-cylinder>
+
+      <!-- гніт -->
+      <a-cylinder position="0 0.27 0" radius="0.004" height="0.05" color="#333"></a-cylinder>
 
       <!-- полум’я -->
       <a-sphere id="flame" position="0 0.35 0" radius="0.05" color="#ff9c00" emissive="#ff9c00" visible="true">
@@ -62,7 +66,7 @@
           direction="alternate" dur="500" repeat="indefinite"></a-animation>
       </a-sphere>
 
-      <!-- світло від полум’я -->
+      <!-- світло -->
       <a-light id="flameLight" type="point" color="#ffb347" position="0 0.35 0" intensity="1" distance="2">
         <a-animation attribute="intensity" from="0.8" to="1.2"
           direction="alternate" dur="400" repeat="indefinite"></a-animation>
@@ -78,6 +82,7 @@
         </a-sphere>
       </a-entity>
 
+      <!-- напис -->
       <a-text id="candleText" value="Пам’ятаємо 💛💙"
               position="0 0.7 0" align="center"
               color="#ffd580" width="2"></a-text>
@@ -91,6 +96,8 @@
     const light = document.getElementById('flameLight');
     const smoke = document.getElementById('smoke');
     const scene = document.querySelector('a-scene');
+    const loader = document.getElementById('loader');
+    const target = document.getElementById('candleTarget');
 
     let isLit = true;
 
@@ -110,17 +117,17 @@
       }
     }
 
-    // 🔁 Дотик — запалити або загасити
+    // 🔁 Дотик по сцені — запалити або загасити
     scene.addEventListener('click', toggleCandle);
 
     // 👁️ Коли маркер знайдено
-    document.getElementById('candleTarget').addEventListener('targetFound', () => {
-      document.getElementById('loader').style.display = 'none';
+    target.addEventListener('targetFound', () => {
+      loader.style.display = 'none';
     });
 
     // 👻 Коли маркер зник
-    document.getElementById('candleTarget').addEventListener('targetLost', () => {
-      document.getElementById('loader').style.display = 'block';
+    target.addEventListener('targetLost', () => {
+      loader.style.display = 'block';
     });
   </script>
 </body>
