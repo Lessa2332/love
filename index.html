@@ -2,27 +2,90 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>🎃 Гарбузове світло</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js" defer></script>
+  <!-- ✅ Спочатку підключаємо A-Frame -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+
+  <!-- ✅ Потім MindAR (AR-розпізнавання маркерів) -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
 
   <style>
-    body { margin: 0; overflow: hidden; background-color: black; font-family: "Comic Sans MS", cursive; }
-    #loader, #startBtn { position: absolute; left: 50%; transform: translateX(-50%); z-index: 9999; }
-    #loader { top: 10px; color: #ffb347; font-size: 18px; background: rgba(11,11,29,0.9); padding: 8px 12px; border-radius: 8px; }
-    #hint { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); padding: 12px 18px; color: #fff; background: rgba(255,140,0,0.9); border-radius: 16px; box-shadow: 0 0 20px #ffb347; font-size: 18px; display:none; z-index: 1000; }
-    #startBtn { top: 110px; }
-    button { background: #ff8c00; color: white; border: none; padding: 10px 16px; font-size: 16px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+      font-family: "Comic Sans MS", cursive;
+    }
+
+    #loader, #startBtn {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      text-align: center;
+    }
+
+    #loader {
+      top: 10px;
+      color: #ffb347;
+      font-size: 18px;
+      background: rgba(11, 11, 29, 0.9);
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    #hint {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 18px;
+      color: #fff;
+      background: rgba(255, 140, 0, 0.9);
+      border-radius: 16px;
+      box-shadow: 0 0 20px #ffb347;
+      font-size: 18px;
+      display: none;
+      z-index: 1000;
+      animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 10px #ff8c00; }
+      to { box-shadow: 0 0 30px #ffd580; }
+    }
+
+    #startBtn {
+      top: 110px;
+      display: none;
+    }
+
+    button {
+      background: #ff8c00;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      font-size: 16px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ffa733;
+    }
   </style>
 </head>
 
 <body>
+  <!-- 📱 Елементи інтерфейсу -->
   <div id="loader">🎃 Наведи камеру на маркер!</div>
   <div id="hint">🎤 Скажи щось гарбузу — він засвітиться!</div>
-  <div id="startBtn" style="display:none;"><button id="btnStart">Запустити звук (потрібен дозвіл)</button></div>
+  <div id="startBtn"><button id="btnStart">🎧 Активувати звук</button></div>
 
+  <!-- 🌌 AR-сцена -->
   <a-scene
     mindar-image="imageTargetSrc: ./targets.mind; autoStart: true;"
     color-space="sRGB"
@@ -39,13 +102,31 @@
     <a-camera position="0 0 0.8"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0" id="target-entity">
-      <a-gltf-model id="pumpkin" src="#pumpkinModel" position="0 -0.1 0" rotation="0 180 0" scale="0.5 0.5 0.5"></a-gltf-model>
+      <a-gltf-model
+        id="pumpkin"
+        src="#pumpkinModel"
+        position="0 -0.1 0"
+        rotation="0 180 0"
+        scale="0.5 0.5 0.5"
+      ></a-gltf-model>
 
-      <a-light id="pumpkinLight" type="point" color="#FFA500" position="0 0.2 0" intensity="0.4" distance="3" decay="1"></a-light>
+      <a-light
+        id="pumpkinLight"
+        type="point"
+        color="#FFA500"
+        position="0 0.2 0"
+        intensity="0.4"
+        distance="3"
+        decay="1"
+      ></a-light>
 
-      <a-entity id="glowSphere" geometry="primitive: sphere; radius: 0.2;"
-                material="color: #FF9900; opacity: 0.3; transparent: true;"
-                position="0 0.2 0" scale="1 1 1"></a-entity>
+      <a-entity
+        id="glowSphere"
+        geometry="primitive: sphere; radius: 0.2;"
+        material="color: #FF9900; opacity: 0.3; transparent: true;"
+        position="0 0.2 0"
+        scale="1 1 1"
+      ></a-entity>
 
       <a-light type="ambient" color="#ffcc88" intensity="0.4"></a-light>
     </a-entity>
@@ -55,7 +136,8 @@
   </a-scene>
 
   <script>
-    (function(){
+    // 🧠 Головна логіка сцени
+    window.addEventListener("DOMContentLoaded", () => {
       const loader = document.getElementById("loader");
       const hint = document.getElementById("hint");
       const startBtnWrap = document.getElementById("startBtn");
@@ -69,22 +151,22 @@
       let analyser = null;
       let dataArray = null;
 
-      // Події знахідки/втрати таргета
+      // 🎯 Коли маркер знайдено
       targetEntity.addEventListener("targetFound", () => {
         isTargetVisible = true;
         loader.style.display = "none";
         hint.style.display = "block";
-        // Показати кнопку для старту мікрофону, якщо ще не ініціалізовано
         if (!audioInitialized) startBtnWrap.style.display = "block";
       });
 
+      // 👻 Коли маркер зник
       targetEntity.addEventListener("targetLost", () => {
         isTargetVisible = false;
         loader.style.display = "block";
         hint.style.display = "none";
       });
 
-      // Ініціалізація мікрофона — зробити після кліку користувача (щоб уникнути блокування)
+      // 🎤 Запуск мікрофону
       btnStart.addEventListener("click", async () => {
         try {
           await initMic();
@@ -92,7 +174,7 @@
           startBtnWrap.style.display = "none";
         } catch (err) {
           console.error("Помилка при доступі до мікрофона:", err);
-          alert("Не вдалося активувати мікрофон. Перевір дозволи.");
+          alert("Не вдалося активувати мікрофон. Перевір дозволи у браузері.");
         }
       });
 
@@ -102,39 +184,35 @@
         const audioContext = new AudioContextClass();
         const src = audioContext.createMediaStreamSource(stream);
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 512; // менший розмір для швидшої реакції
+        analyser.fftSize = 512;
         analyser.smoothingTimeConstant = 0.8;
         src.connect(analyser);
 
         dataArray = new Uint8Array(analyser.frequencyBinCount);
-        // Запускаємо цикл анімації (він сам перевіряє isTargetVisible)
         requestAnimationFrame(animateLight);
       }
 
       function animateLight() {
-        // Якщо аналізатор є — читаємо дані
         if (analyser && dataArray) {
           analyser.getByteFrequencyData(dataArray);
           const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-          const loudness = Math.min(Math.max(avg / 80, 0), 1.5); // норма: 0..1.5
+          const loudness = Math.min(Math.max(avg / 80, 0), 1.5);
           const intensity = Math.min(loudness * 3, 3);
           const glowSize = 1 + loudness * 0.8;
 
           if (isTargetVisible) {
             pumpkinLight.setAttribute("intensity", (0.2 + intensity).toFixed(2));
             glowSphere.setAttribute("scale", `${glowSize} ${glowSize} ${glowSize}`);
-            // Правильний спосіб запису матеріалу
-            glowSphere.setAttribute("material", `opacity: ${ (0.2 + loudness * 0.3).toFixed(3) }`);
+            glowSphere.setAttribute("material", `opacity: ${(0.2 + loudness * 0.3).toFixed(2)}`);
           }
         }
-        // Цикл має продовжуватися завжди, навіть коли таргет не видно
         requestAnimationFrame(animateLight);
       }
 
-      // Додатково — невеликий лог для дебагу
+      // 🧩 Дебаг-перехоплення помилок
       window.addEventListener("error", (e) => console.error("Window error:", e.message));
       window.addEventListener("unhandledrejection", (e) => console.error("Promise rejection:", e.reason));
-    })();
+    });
   </script>
 </body>
 </html>
