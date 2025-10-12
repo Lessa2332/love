@@ -5,18 +5,83 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>🎃 Гарбузове світло</title>
 
-  <!-- ✅ ВИПРАВЛЕНО: Завантажуємо як у вашому робочому коді -->
+  <!-- ✅ Бібліотеки -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    /* наші стилі */
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+      font-family: "Comic Sans MS", cursive;
+    }
+
+    #loader, #startBtn {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+    }
+
+    #loader {
+      top: 10px;
+      color: #ffb347;
+      font-size: 18px;
+      background: rgba(11, 11, 29, 0.9);
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    #hint {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 18px;
+      color: #fff;
+      background: rgba(255, 140, 0, 0.9);
+      border-radius: 16px;
+      box-shadow: 0 0 20px #ffb347;
+      font-size: 18px;
+      display: none;
+      z-index: 1000;
+    }
+
+    #startBtn {
+      top: 110px;
+      display: none;
+    }
+
+    button {
+      background: #ff8c00;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      font-size: 16px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ffa733;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 
 <body>
-  <!-- наш інтерфейс -->
+  <!-- 📱 Елементи інтерфейсу -->
+  <div id="loader">🎃 Наведи камеру на маркер!</div>
+  <div id="hint">🎤 Скажи щось гарбузу — він засвітиться!</div>
+  <div id="startBtn"><button id="btnStart">🎧 Активувати звук</button></div>
 
+  <!-- 🌌 AR-сцена -->
   <a-scene
     mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiLoading: no; uiError: no; maxTrack: 1;"
     embedded
@@ -25,28 +90,159 @@
     device-orientation-permission-ui="enabled: false"
     style="background: transparent;"
   >
-    <!-- AR вміст -->
+    <a-assets>
+      <a-asset-item id="pumpkinModel" src="./pumpkin.glb"></a-asset-item>
+    </a-assets>
+
+    <a-camera position="0 0 0"></a-camera>
+
+    <a-entity mindar-image-target="targetIndex: 0" id="target-entity">
+      <a-gltf-model
+        id="pumpkin"
+        src="#pumpkinModel"
+        position="0 -0.1 0"
+        rotation="0 180 0"
+        scale="0.5 0.5 0.5"
+      ></a-gltf-model>
+
+      <a-light
+        id="pumpkinLight"
+        type="point"
+        color="#FFA500"
+        position="0 0.2 0"
+        intensity="0.4"
+        distance="3"
+        decay="1"
+      ></a-light>
+
+      <a-entity
+        id="glowSphere"
+        geometry="primitive: sphere; radius: 0.2;"
+        material="color: #FF9900; opacity: 0.3; transparent: true;"
+        position="0 0.2 0"
+        scale="1 1 1"
+      ></a-entity>
+
+      <a-light type="ambient" color="#ffcc88" intensity="0.4"></a-light>
+    </a-entity>
+
+    <a-sky color="#0b0b1d"></a-sky>
+    <a-light type="hemisphere" color="#fff4e0" ground-color="#ff6600" intensity="0.2"></a-light>
   </a-scene>
 
   <script>
-    // ✅ ВИПРАВЛЕНО: Проста ініціалізація як у вашому коді
+    // 🧠 Головна логіка додатку
     document.addEventListener('DOMContentLoaded', () => {
-      const scene = document.querySelector('a-scene');
-      
-      scene.addEventListener('renderstart', () => {
-        console.log('AR сцена готова!');
-        // Тут наш код ініціалізації
+      const loader = document.getElementById("loader");
+      const hint = document.getElementById("hint");
+      const startBtnWrap = document.getElementById("startBtn");
+      const btnStart = document.getElementById("btnStart");
+      const targetEntity = document.getElementById("target-entity");
+      const pumpkinLight = document.getElementById("pumpkinLight");
+      const glowSphere = document.getElementById("glowSphere");
+
+      let isTargetVisible = false;
+      let audioInitialized = false;
+      let analyser = null;
+      let dataArray = null;
+      let audioContext = null;
+
+      // 🎯 Коли маркер знайдено
+      targetEntity.addEventListener("targetFound", () => {
+        console.log("🎯 Маркер знайдено!");
+        isTargetVisible = true;
+        loader.style.display = "none";
+        hint.style.display = "block";
+        if (!audioInitialized) {
+          startBtnWrap.style.display = "block";
+        }
       });
 
-      scene.addEventListener('targetFound', (e) => {
-        console.log('Маркер знайдено!');
-        // Обробка знаходження маркера
+      // 👻 Коли маркер зник
+      targetEntity.addEventListener("targetLost", () => {
+        console.log("👻 Маркер втрачено!");
+        isTargetVisible = false;
+        loader.style.display = "block";
+        hint.style.display = "none";
+        startBtnWrap.style.display = "none";
+        
+        // Скидаємо світло
+        resetLights();
       });
 
-      scene.addEventListener('targetLost', (e) => {
-        console.log('Маркер втрачено!');
-        // Обробка втрати маркера
+      // 🎤 Запуск мікрофону
+      btnStart.addEventListener("click", async () => {
+        try {
+          btnStart.textContent = "⏳ Активуємо...";
+          btnStart.disabled = true;
+          await initMic();
+          audioInitialized = true;
+          startBtnWrap.style.display = "none";
+          hint.textContent = "🎤 Говори щось — гарбуз засвітиться!";
+        } catch (err) {
+          console.error("Помилка при доступі до мікрофона:", err);
+          btnStart.textContent = "🔄 Спробувати знову";
+          btnStart.disabled = false;
+          alert("Не вдалося активувати мікрофон. Перевір дозволи у браузері.");
+        }
       });
+
+      function resetLights() {
+        if (pumpkinLight) {
+          pumpkinLight.setAttribute("intensity", "0.4");
+        }
+        if (glowSphere) {
+          glowSphere.setAttribute("scale", "1 1 1");
+          glowSphere.setAttribute("material", "opacity", "0.3");
+        }
+      }
+
+      async function initMic() {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: false
+          } 
+        });
+        
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioContextClass();
+        const src = audioContext.createMediaStreamSource(stream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.7;
+        src.connect(analyser);
+
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        console.log("🎤 Мікрофон успішно активовано!");
+        animateLight();
+      }
+
+      function animateLight() {
+        if (analyser && dataArray && isTargetVisible) {
+          analyser.getByteFrequencyData(dataArray);
+          const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+          const loudness = Math.min(Math.max(avg / 80, 0), 1.5);
+          const intensity = Math.min(loudness * 3, 3);
+          const glowSize = 1 + loudness * 0.8;
+
+          if (pumpkinLight) {
+            pumpkinLight.setAttribute("intensity", (0.2 + intensity).toFixed(2));
+          }
+          if (glowSphere) {
+            glowSphere.setAttribute("scale", `${glowSize} ${glowSize} ${glowSize}`);
+            glowSphere.setAttribute("material", "opacity", (0.2 + loudness * 0.3).toFixed(2));
+          }
+        }
+        requestAnimationFrame(animateLight);
+      }
+
+      // 🧩 Дебаг-перехоплення помилок
+      window.addEventListener("error", (e) => console.error("Window error:", e.message));
+      window.addEventListener("unhandledrejection", (e) => console.error("Promise rejection:", e.reason));
+
+      console.log("🚀 Додаток ініціалізовано!");
     });
   </script>
 </body>
