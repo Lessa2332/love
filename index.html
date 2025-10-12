@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>🕯️ Свічка пам'яті</title>
 
-  <!-- ✅ Обидва скрипти з defer -->
-  <script src="https://unpkg.com/aframe@1.6.0/dist/aframe.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" defer></script>
+  <!-- ✅ Коректні посилання -->
+  <script src="https://unpkg.com/aframe@1.6.0/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
     body {
@@ -43,9 +43,12 @@
     device-orientation-permission-ui="enabled: false"
     renderer="colorManagement: true; alpha: true;"
   >
-    <a-assets></a-assets>
+    <a-assets>
+      <!-- Додаємо шрифт в assets -->
+      <a-asset-item id="dejaVuFont" src="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-asset-item>
+    </a-assets>
 
-    <a-camera position="0 0 0" active="false"></a-camera>
+    <a-camera position="0 0 0"></a-camera>
 
     <!-- 🕯️ Свічка -->
     <a-entity mindar-image-target="targetIndex: 0" id="candleTarget">
@@ -63,8 +66,8 @@
       <!-- дим -->
       <a-entity id="smoke" visible="false">
         <a-sphere position="0 0.45 0" radius="0.03" color="#cccccc" opacity="0.3">
-          <a-animation attribute="position" from="0 0.45 0" to="0 0.7 0" dur="1000" easing="ease-out"></a-animation>
-          <a-animation attribute="opacity" from="0.3" to="0" dur="1000"></a-animation>
+          <a-animation attribute="position" from="0 0.45 0" to="0 0.7 0" dur="1000" easing="ease-out" repeat="indefinite"></a-animation>
+          <a-animation attribute="opacity" from="0.3" to="0" dur="1000" repeat="indefinite"></a-animation>
         </a-sphere>
       </a-entity>
       <!-- напис -->
@@ -84,16 +87,8 @@
       const target = document.getElementById('candleTarget');
 
       let isLit = true;
-      let clickTimeout = null;
 
-      function toggleCandle(event) {
-        // Запобігаємо подвійному спрацюванню
-        if (clickTimeout) return;
-        
-        clickTimeout = setTimeout(() => {
-          clickTimeout = null;
-        }, 300);
-
+      function toggleCandle() {
         if (isLit) {
           flame.setAttribute('visible', false);
           light.setAttribute('intensity', 0);
@@ -107,15 +102,22 @@
         }
       }
 
-      // Додаємо обробник тільки один раз
       scene.addEventListener('click', toggleCandle);
 
+      // Обробники для AR-маркера
       target.addEventListener('targetFound', () => {
+        console.log('Маркер знайдено');
         loader.style.display = 'none';
       });
 
       target.addEventListener('targetLost', () => {
+        console.log('Маркер втрачено');
         loader.style.display = 'block';
+      });
+
+      // Перевірка завантаження сцени
+      scene.addEventListener('loaded', () => {
+        console.log('A-Frame сцена завантажена');
       });
     });
   </script>
