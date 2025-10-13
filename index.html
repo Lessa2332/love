@@ -8,20 +8,16 @@
 
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
     
     <style>
-        * {
+        html, body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-        
-        html, body {
             width: 100%;
             height: 100%;
             overflow: hidden;
             background: transparent;
-            font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
         }
         
         a-scene {
@@ -34,11 +30,11 @@
         }
 
         .arjs-loader {
+            height: 100%;
+            width: 100%;
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
             background: rgba(135, 206, 235, 0.2);
             z-index: 9999;
             display: flex;
@@ -46,21 +42,20 @@
             justify-content: center;
             align-items: center;
             color: #FF4500;
-            font-size: clamp(1.2em, 4vw, 1.8em);
+            font-size: 1.8em;
             text-align: center;
             padding: 20px;
+            box-sizing: border-box;
+            font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.8; }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
-        .pulse { 
-            animation: pulse 2s ease-in-out infinite; 
-            margin-bottom: 15px;
-        }
+        .pulse { animation: pulse 1.5s infinite; }
 
         .controls {
             position: absolute;
@@ -69,46 +64,30 @@
             transform: translateX(-50%);
             z-index: 10000;
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            justify-content: center;
-            max-width: 90%;
+            gap: 10px;
         }
 
         .sound-btn, .youtube-btn {
-            padding: 8px 16px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 12px;
+            border-radius: 15px;
             cursor: pointer;
-            font-family: inherit;
-            font-size: 0.9em;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+            font-size: 1em;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             text-decoration: none;
-            transition: all 0.3s ease;
-            min-width: 120px;
         }
 
-        .sound-btn { 
-            background: linear-gradient(145deg, #4CAF50, #45a049);
-            color: white; 
-        }
-        .sound-btn.off { 
-            background: linear-gradient(145deg, #f44336, #da190b); 
-        }
-        .youtube-btn { 
-            background: linear-gradient(145deg, #FF9800, #f57c00);
-            color: white; 
-        }
-        .sound-btn:hover, .youtube-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
+        .sound-btn { background-color: #4CAF50; color: white; }
+        .sound-btn.off { background-color: #f44336; }
+        .youtube-btn { background-color: #FF9800; color: white; }
+        .youtube-btn:hover { background-color: #FFB300; }
     </style>
 </head>
 <body>
     <div class="arjs-loader" id="loader">
         <div class="pulse">🕯️ Свічка на долоні 🔥</div>
-        <div>Наведи камеру на маркер! 😊</div>
+        <div style="margin-top: 20px; font-size: 1.2em;">Наведи камеру на маркер! 😊🔥</div>
     </div>
 
     <a-scene
@@ -118,53 +97,33 @@
         loading-screen="enabled: false"
         embedded
         renderer="colorManagement: true; physicallyCorrectLights: true;"
+        touch-gestures
     >
+        <!-- Освітлення для коректного відображення PBR-матеріалів -->
+        <a-entity light="type: ambient; color: #FFFFFF; intensity: 1"></a-entity>
+        <a-entity light="type: directional; color: #FFFFFF; intensity: 0.7" position="2 3 1"></a-entity>
+
         <a-assets>
             <audio id="bg-music" src="./message.mp3" preload="auto" loop></audio>
-            <img id="flame-texture" src="https://cdn.jsdelivr.net/gh/aframevr/assets@master/common/images/particle.png" crossorigin="anonymous">
+            <img id="flame-texture" src="https://png.pngtree.com/png-clipart/20190611/original/pngtree-fire-particle-effects-png-image_3009882.jpg">
         </a-assets>
-
-        <!-- Освітлення -->
-        <a-light type="ambient" color="#FFFFFF" intensity="0.6"></a-light>
-        <a-light type="directional" color="#FFFFFF" intensity="0.8" position="2 5 3"></a-light>
 
         <a-camera
             id="camera"
-            position="0 0 0"
+            position="0 0 1.5"
             look-controls="enabled: false"
-            active="false"
         ></a-camera>
 
         <a-entity mindar-image-target="targetIndex: 0">
-            <a-entity id="candle-container" position="0 0 0" scale="0.4 0.4 0.4" visible="false">
-                <!-- Резервна свічка, якщо GLB не працює -->
-                <a-cylinder id="candle-body" radius="0.15" height="1.2" color="#F5F5DC" roughness="0.8" position="0 0.6 0">
-                    <a-animation attribute="rotation" dur="20000" to="0 360 0" repeat="indefinite" easing="linear"></a-animation>
-                </a-cylinder>
+            <a-entity id="candle" position="0 0 -0.5" scale="0.5 0.5 0.5" visible="false">
+                <!-- 3D модель свічки -->
+                <a-gltf-model id="candle-body" src="./candle.glb" position="0 0 0"></a-gltf-model>
                 
-                <!-- Віск -->
-                <a-cone id="candle-wax" radius="0.18" height="0.15" color="#FFB74D" roughness="0.9" position="0 1.25 0"></a-cone>
+                <!-- Полум'я -->
+                <a-entity id="flame" position="0 0.4 0" rotation="-90 0 0" particle-system="texture: #flame-texture; color: #FFA500,#FF4500,#FF0000; blending: additive; size: 0.05 0.2; particleCount: 100; maxAge: 1; velocityValue: 0 1 0; velocitySpread: 0.1 0.2 0.1; accelerationValue: 0 0.5 0; opacity: 1 0 0; rotation: true"></a-entity>
                 
-                <!-- Динамічне полум'я -->
-                <a-entity id="flame-container" position="0 1.35 0">
-                    <a-entity id="flame-core" 
-                              geometry="primitive: sphere; radius: 0.03"
-                              material="color: #FFFF00; emissive: #FF4500; emissiveIntensity: 2"
-                              animation="property: scale; to: 1.2 1.5 1.2; dur: 300; easing: easeInOutSine; dir: alternate; loop: true">
-                    </a-entity>
-                    
-                    <a-entity id="flame-particles"
-                              particle-system="preset: default; color: #FFA500, #FF4500, #FF0000; 
-                              particleCount: 30; opacity: 0.8 0; size: 0.02 0.08; maxAge: 0.8; 
-                              velocityValue: 0 0.8 0; velocitySpread: 0.1 0.3 0.1; 
-                              accelerationValue: 0 0.4 0; accelerationSpread: 0.05 0.1 0.05">
-                    </a-entity>
-                </a-entity>
-
                 <!-- Світло від полум'я -->
-                <a-light id="flame-light" type="point" color="#FF4500" intensity="0.8" distance="3" position="0 1.35 0"
-                         animation="property: intensity; to: 1.2; dur: 400; easing: easeInOutSine; dir: alternate; loop: true">
-                </a-light>
+                <a-light id="flame-light" type="point" color="#FF4500" intensity="1" distance="5" position="0 0.45 0"></a-light>
             </a-entity>
         </a-entity>
     </a-scene>
@@ -176,269 +135,198 @@
     </div>
 
     <script>
-        class CandleAR {
-            constructor() {
-                this.init();
-            }
+        // Адаптивність для повного екрану
+        function fixHeight() {
+            document.body.style.height = window.innerHeight + 'px';
+        }
+        fixHeight();
+        window.addEventListener('resize', fixHeight);
 
-            init() {
-                this.elements = {
-                    loader: document.getElementById('loader'),
-                    targetEntity: document.querySelector('[mindar-image-target]'),
-                    candleContainer: document.getElementById('candle-container'),
-                    flameContainer: document.getElementById('flame-container'),
-                    flameLight: document.getElementById('flame-light'),
-                    bgMusic: document.getElementById('bg-music'),
-                    soundBtn: document.getElementById('sound-btn'),
-                    micBtn: document.getElementById('mic-btn')
-                };
+        // Посилання на елементи
+        const loader = document.querySelector('#loader');
+        const targetEntity = document.querySelector('[mindar-image-target]');
+        const candle = document.querySelector('#candle');
+        const flame = document.querySelector('#flame');
+        const flameLight = document.querySelector('#flame-light');
+        const bgMusic = document.querySelector('#bg-music');
+        const soundBtn = document.querySelector('#sound-btn');
+        const micBtn = document.querySelector('#mic-btn');
 
-                this.audio = {
-                    context: null,
-                    analyser: null,
-                    dataArray: null,
-                    micStream: null,
-                    isMicActive: false
-                };
+        let audioContext, analyser, dataArray, micStream;
+        let baseVelocityY = 1;
+        let baseAccelerationY = 0.5;
+        let baseSizeMax = 0.2;
 
-                this.flameSettings = {
-                    baseVelocityY: 0.8,
-                    baseAccelerationY: 0.4,
-                    baseSize: 0.08
-                };
+        // Компонент для обробки сенсорних жестів
+        AFRAME.registerComponent('touch-gestures', {
+            schema: {
+                minScale: { type: 'number', default: 0.2 },
+                maxScale: { type: 'number', default: 3.0 },
+                rotationSpeed: { type: 'number', default: 2.0 }
+            },
+            init: function () {
+                this.isRotating = false;
+                this.isPinching = false;
+                this.startPos = { x: 0, y: 0 };
+                this.currentScale = 1;
+                this.candle = document.querySelector('#candle');
 
-                this.setupEventListeners();
-                this.fixHeight();
-            }
-
-            fixHeight() {
-                document.body.style.height = window.innerHeight + 'px';
-                window.addEventListener('resize', () => {
-                    document.body.style.height = window.innerHeight + 'px';
-                });
-            }
-
-            setupEventListeners() {
-                // Відстеження маркера
-                if (this.elements.targetEntity) {
-                    this.elements.targetEntity.addEventListener('targetFound', () => this.onTargetFound());
-                    this.elements.targetEntity.addEventListener('targetLost', () => this.onTargetLost());
+                if (!this.candle) {
+                    console.error('Свічка не знайдена в компоненті touch-gestures');
+                    return;
                 }
 
-                // Кнопки управління
-                this.elements.soundBtn.addEventListener('click', () => this.toggleSound());
-                this.elements.micBtn.addEventListener('click', () => this.toggleMicrophone());
-
-                // Жести
-                this.setupTouchGestures();
-            }
-
-            onTargetFound() {
-                console.log("🎯 Маркер знайдено!");
-                this.elements.loader.style.display = 'none';
-                this.elements.candleContainer.setAttribute('visible', 'true');
-                this.startFlameAnimation();
-                
-                if (this.elements.bgMusic && this.elements.bgMusic.paused) {
-                    this.playBackgroundMusic();
-                }
-            }
-
-            onTargetLost() {
-                console.log("ℹ️ Маркер втрачено.");
-                this.elements.candleContainer.setAttribute('visible', 'false');
-                this.stopBackgroundMusic();
-                this.elements.loader.style.display = 'flex';
-            }
-
-            startFlameAnimation() {
-                // Додаємо випадкові коливання полум'я
-                this.flameContainer = this.elements.flameContainer;
-                if (this.flameContainer) {
-                    setInterval(() => {
-                        const randomX = (Math.random() - 0.5) * 0.05;
-                        const randomZ = (Math.random() - 0.5) * 0.05;
-                        this.flameContainer.setAttribute('position', {
-                            x: randomX,
-                            y: 1.35 + Math.random() * 0.02,
-                            z: randomZ
-                        });
-                    }, 100);
-                }
-            }
-
-            async playBackgroundMusic() {
-                try {
-                    await this.elements.bgMusic.play();
-                    this.elements.soundBtn.classList.remove('off');
-                    this.elements.soundBtn.textContent = 'Вимкнути звук';
-                } catch (error) {
-                    console.log("🔇 Помилка відтворення музики:", error);
-                }
-            }
-
-            stopBackgroundMusic() {
-                if (this.elements.bgMusic && !this.elements.bgMusic.paused) {
-                    this.elements.bgMusic.pause();
-                }
-            }
-
-            toggleSound() {
-                if (this.elements.bgMusic.paused) {
-                    this.playBackgroundMusic();
-                } else {
-                    this.elements.bgMusic.pause();
-                    this.elements.soundBtn.classList.add('off');
-                    this.elements.soundBtn.textContent = 'Увімкнути звук';
-                }
-            }
-
-            async toggleMicrophone() {
-                if (!this.audio.isMicActive) {
-                    await this.initMicrophone();
-                } else {
-                    this.deactivateMicrophone();
-                }
-            }
-
-            async initMicrophone() {
-                try {
-                    this.audio.micStream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: false
-                        } 
-                    });
-                    
-                    this.audio.context = new (window.AudioContext || window.webkitAudioContext)();
-                    const source = this.audio.context.createMediaStreamSource(this.audio.micStream);
-                    
-                    this.audio.analyser = this.audio.context.createAnalyser();
-                    this.audio.analyser.fftSize = 64;
-                    this.audio.analyser.smoothingTimeConstant = 0.8;
-                    
-                    source.connect(this.audio.analyser);
-                    this.audio.dataArray = new Uint8Array(this.audio.analyser.frequencyBinCount);
-                    
-                    this.audio.isMicActive = true;
-                    this.elements.micBtn.classList.remove('off');
-                    this.elements.micBtn.textContent = 'Вимкнути мікрофон';
-                    
-                    this.updateFlameFromAudio();
-                    
-                } catch (error) {
-                    console.error('❌ Помилка мікрофона:', error);
-                    alert('Не вдалося отримати доступ до мікрофона. Перевірте дозволи.');
-                }
-            }
-
-            deactivateMicrophone() {
-                if (this.audio.micStream) {
-                    this.audio.micStream.getTracks().forEach(track => track.stop());
-                }
-                if (this.audio.context) {
-                    this.audio.context.close();
-                }
-                
-                this.audio.isMicActive = false;
-                this.elements.micBtn.classList.add('off');
-                this.elements.micBtn.textContent = 'Увімкнути мікрофон';
-                
-                // Скидаємо полум'я до нормального стану
-                this.resetFlame();
-            }
-
-            updateFlameFromAudio() {
-                if (!this.audio.isMicActive || !this.audio.analyser) return;
-
-                this.audio.analyser.getByteFrequencyData(this.audio.dataArray);
-                
-                let sum = 0;
-                for (let i = 0; i < this.audio.dataArray.length; i++) {
-                    sum += this.audio.dataArray[i];
-                }
-                
-                const average = sum / this.audio.dataArray.length;
-                const volume = Math.min(1, average / 128);
-
-                // Оновлюємо полум'я на основі гучності
-                this.updateFlameIntensity(volume);
-                
-                requestAnimationFrame(() => this.updateFlameFromAudio());
-            }
-
-            updateFlameIntensity(volume) {
-                const intensity = 1 + volume * 3;
-                const particleCount = 30 + Math.floor(volume * 50);
-                const velocityY = this.flameSettings.baseVelocityY + volume * 0.5;
-                
-                const particles = document.getElementById('flame-particles');
-                if (particles) {
-                    particles.setAttribute('particle-system', {
-                        particleCount: particleCount,
-                        velocityValue: `0 ${velocityY} 0`,
-                        size: `0.02 ${this.flameSettings.baseSize + volume * 0.1}`
-                    });
-                }
-
-                if (this.elements.flameLight) {
-                    this.elements.flameLight.setAttribute('intensity', 0.8 + volume * 2);
-                }
-            }
-
-            resetFlame() {
-                const particles = document.getElementById('flame-particles');
-                if (particles) {
-                    particles.setAttribute('particle-system', {
-                        particleCount: 30,
-                        velocityValue: `0 ${this.flameSettings.baseVelocityY} 0`,
-                        size: `0.02 ${this.flameSettings.baseSize}`
-                    });
-                }
-
-                if (this.elements.flameLight) {
-                    this.elements.flameLight.setAttribute('intensity', 0.8);
-                }
-            }
-
-            setupTouchGestures() {
-                let startScale = 1;
-                let initialDistance = 0;
-
-                document.addEventListener('touchstart', (e) => {
-                    if (e.touches.length === 2) {
-                        initialDistance = this.getTouchDistance(e.touches);
-                        startScale = this.elements.candleContainer.object3D.scale.x;
+                this.el.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (e.touches.length === 1) {
+                        this.isRotating = true;
+                        this.startPos.x = e.touches[0].pageX;
+                        this.startPos.y = e.touches[0].pageY;
+                    } else if (e.touches.length === 2) {
+                        this.isPinching = true;
+                        this.isRotating = false;
+                        this.initialDistance = Math.hypot(
+                            e.touches[0].pageX - e.touches[1].pageX,
+                            e.touches[0].pageY - e.touches[1].pageY
+                        );
+                        this.currentScale = this.candle.object3D.scale.x;
                     }
                 });
 
-                document.addEventListener('touchmove', (e) => {
-                    if (e.touches.length === 2) {
-                        const currentDistance = this.getTouchDistance(e.touches);
-                        const scaleFactor = currentDistance / initialDistance;
-                        const newScale = Math.max(0.2, Math.min(2, startScale * scaleFactor));
-                        
-                        this.elements.candleContainer.object3D.scale.setScalar(newScale);
+                this.el.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (this.isPinching && e.touches.length === 2) {
+                        const currentDistance = Math.hypot(
+                            e.touches[0].pageX - e.touches[1].pageX,
+                            e.touches[0].pageY - e.touches[1].pageY
+                        );
+                        const scaleFactor = currentDistance / this.initialDistance;
+                        const newScale = Math.max(this.data.minScale, Math.min(this.data.maxScale, this.currentScale * scaleFactor));
+                        this.candle.object3D.scale.set(newScale, newScale, newScale);
+                    } else if (this.isRotating && e.touches.length === 1) {
+                        const deltaX = (e.touches[0].pageX - this.startPos.x) * this.data.rotationSpeed;
+                        const deltaY = (e.touches[0].pageY - this.startPos.y) * this.data.rotationSpeed;
+                        this.candle.object3D.rotation.y += THREE.MathUtils.degToRad(deltaX);
+                        this.candle.object3D.rotation.x += THREE.MathUtils.degToRad(deltaY);
+                        this.startPos.x = e.touches[0].pageX;
+                        this.startPos.y = e.touches[0].pageY;
                     }
                 });
-            }
 
-            getTouchDistance(touches) {
-                const dx = touches[0].pageX - touches[1].pageX;
-                const dy = touches[0].pageY - touches[1].pageY;
-                return Math.sqrt(dx * dx + dy * dy);
+                this.el.addEventListener('touchend', () => {
+                    this.isRotating = false;
+                    this.isPinching = false;
+                });
+            }
+        });
+
+        // Функція для ініціалізації мікрофона та аналізу аудіо
+        async function initMic() {
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(micStream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                micBtn.classList.remove('off');
+                micBtn.textContent = 'Вимкнути мікрофон';
+                updateFlame();
+            } catch (err) {
+                console.error('Помилка доступу до мікрофона:', err);
+                micBtn.classList.add('off');
+                micBtn.textContent = 'Мікрофон недоступний';
             }
         }
 
-        // Ініціалізація додатку
-        document.addEventListener('DOMContentLoaded', () => {
-            new CandleAR();
+        // Функція для оновлення полум'я на основі гучності
+        function updateFlame() {
+            if (!analyser) return;
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            const avg = sum / dataArray.length;
+            const volume = Math.min(1, avg / 128);
+
+            const velocityY = baseVelocityY + volume * 1;
+            const accelerationY = baseAccelerationY + volume * 0.5;
+            const sizeMax = baseSizeMax + volume * 0.1;
+            flame.setAttribute('particle-system', {
+                velocityValue: `0 ${velocityY} 0`,
+                accelerationValue: `0 ${accelerationY} 0`,
+                size: `0.05 ${sizeMax}`
+            });
+
+            const lightIntensity = 1 + volume * 4;
+            flameLight.setAttribute('intensity', lightIntensity);
+
+            requestAnimationFrame(updateFlame);
+        }
+
+        // Логіка відстеження маркера
+        if (targetEntity) {
+            targetEntity.addEventListener('targetFound', () => {
+                console.log("🎯 Маркер знайдено! Свічка з'явилася.");
+                loader.style.display = 'none';
+                if (candle) {
+                    candle.setAttribute('visible', 'true');
+                }
+                if (bgMusic && bgMusic.paused) {
+                    bgMusic.play().catch(e => console.log("🔇 Помилка відтворення музики:", e));
+                    soundBtn.classList.remove('off');
+                    soundBtn.textContent = 'Вимкнути звук';
+                }
+            });
+
+            targetEntity.addEventListener('targetLost', () => {
+                console.log("ℹ️ Маркер втрачено.");
+                if (candle) {
+                    candle.setAttribute('visible', 'false');
+                }
+                if (bgMusic && !bgMusic.paused) bgMusic.pause();
+                loader.style.display = 'flex';
+                loader.querySelector('.pulse').textContent = '🕯️ Свічка на долоні 🔥';
+                loader.querySelector('div[style]').textContent = 'Наведи камеру на маркер! 😊🔥';
+            });
+        } else {
+            console.error('Елемент mindar-image-target не знайдено!');
+        }
+
+        // Обробка кнопки звуку
+        soundBtn.addEventListener('click', () => {
+            if (bgMusic.paused) {
+                bgMusic.play().catch(e => console.log("🔇 Помилка відтворення музики:", e));
+                soundBtn.classList.remove('off');
+                soundBtn.textContent = 'Вимкнути звук';
+            } else {
+                bgMusic.pause();
+                soundBtn.classList.add('off');
+                soundBtn.textContent = 'Увімкнути звук';
+            }
         });
 
-        // Обробка помилок
-        window.addEventListener('error', (e) => {
-            console.error('Global error:', e.error);
+        // Обробка кнопки мікрофона
+        micBtn.addEventListener('click', () => {
+            if (!analyser) {
+                initMic();
+            } else {
+                if (micStream) {
+                    micStream.getTracks().forEach(track => track.stop());
+                }
+                if (audioContext) audioContext.close();
+                analyser = null;
+                micBtn.classList.add('off');
+                micBtn.textContent = 'Увімкнути мікрофон';
+                flame.setAttribute('particle-system', {
+                    velocityValue: `0 ${baseVelocityY} 0`,
+                    accelerationValue: `0 ${baseAccelerationY} 0`,
+                    size: `0.05 ${baseSizeMax}`
+                });
+                flameLight.setAttribute('intensity', 1);
+            }
         });
     </script>
 </body>
