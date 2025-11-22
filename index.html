@@ -3,15 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магічне серце кохання</title>
+    <title>Твоє серце б'ється від мого голосу ❤️</title>
     <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
     <style>
-        body {
-            margin: 0;
-            background: #000;
-            overflow: hidden;
-            font-family: 'Arial', sans-serif;
-        }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
         #ui {
             position: fixed;
             top: 20px;
@@ -20,349 +15,257 @@
             color: white;
             text-align: center;
             z-index: 1000;
-            background: rgba(255, 0, 85, 0.3);
-            padding: 15px 30px;
-            border-radius: 25px;
-            backdrop-filter: blur(10px);
+            background: rgba(255, 20, 147, 0.25);
+            padding: 15px 40px;
+            border-radius: 30px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 105, 180, 0.3);
         }
-        #status {
-            font-size: 18px;
-            margin-bottom: 10px;
+        #status { font-size: 20px; margin-bottom: 8px; }
+        #words { 
+            font-size: 28px; 
+            color: #ff69b4; 
+            font-weight: bold; 
+            text-shadow: 0 0 20px #ff1493;
+            min-height: 40px;
         }
-        #words {
-            font-size: 24px;
-            color: #ff4081;
-            font-weight: bold;
-            min-height: 32px;
-        }
-        .pulse {
-            animation: pulse 0.5s ease-in-out;
-        }
-        @keyframes pulse {
+        .pulse { animation: bigpulse 0.6s cubic-bezier(0.4, 0, 0.6, 1); }
+        @keyframes bigpulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.25); }
             100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
-    <div id="ui">
-        <div id="status">🎤 Говори слова кохання...</div>
-        <div id="words"></div>
-    </div>
 
-    <a-scene background="color: #000011">
-        <!-- Магічне серце -->
-        <a-entity id="magic-heart" position="0 1.5 -3">
-            <!-- Основне серце -->
-            <a-entity class="heart-main" geometry="primitive: sphere; radius: 0.5"
-                     material="color: #ff0055; shader: flat; emissive: #ff0055; emissiveIntensity: 0.3"
-                     animation="property: scale; to: 1.2 1.2 1.2; dur: 500; easing: easeInOutQuad; loop: true; dir: alternate">
-            </a-entity>
-            
-            <!-- Внутрішнє світіння -->
-            <a-entity class="heart-glow" geometry="primitive: sphere; radius: 0.6"
-                     material="color: #ff1493; transparent: true; opacity: 0.3; shader: flat"
-                     animation="property: scale; to: 1.1 1.1 1.1; dur: 400; easing: easeInOutQuad; loop: true; dir: alternate">
-            </a-entity>
-            
-            <!-- Частинки світіння навколо -->
-            <a-entity id="heart-particles"></a-entity>
-        </a-entity>
+<div id="ui">
+    <div id="status">Натисни будь-де і скажи слова кохання...</div>
+    <div id="words"></div>
+</div>
 
-        <!-- Додаткові декоративні елементи -->
-        <a-entity id="floating-hearts"></a-entity>
-        
-        <!-- Камера -->
-        <a-camera position="0 1.6 0"></a-camera>
-        
-        <!-- Джерела світла -->
-        <a-light type="point" color="#ff0066" intensity="2" position="2 3 2"></a-light>
-        <a-light type="point" color="#ff1493" intensity="1.5" position="-2 2 -1"></a-light>
-        <a-light type="ambient" color="#4455ff" intensity="0.3"></a-light>
-    </a-scene>
+<a-scene background="color: #000011" embedded style="width:100%; height:100vh;">
 
-    <script>
-        class MagicHeart {
-            constructor() {
-                this.recognition = null;
-                this.isListening = false;
-                this.heartbeatInterval = null;
-                this.lastSpeechTime = 0;
-                this.heartIntensity = 0.3;
-                this.loveWords = [
-                    'кохання', 'любов', 'любий', 'коханий', 'милий', 'серце', 'щастя',
-                    'ніжність', 'турбота', 'пристрасть', 'романтика', 'обійми', 'поцілунок',
-                    'закоханий', 'мрія', 'чудовий', 'прекрасний', 'чарівний', 'незабутній'
-                ];
-                
-                this.init();
-            }
+    <!-- РЕАЛЬНЕ СЕРЦЕ З ПРИМИТИВІВ -->
+    <a-entity id="true-heart" position="0 1.6 -3" rotation="0 0 0">
 
-            init() {
-                this.setupSpeechRecognition();
-                this.createFloatingHearts();
-                this.startHeartbeat();
-                
-                // Початкова анімація
-                this.animateHeart(0.5);
-            }
+        <!-- Ліва половинка серця -->
+        <a-sphere position="-0.25 0.3 0" radius="0.65"
+                  material="color:#ff1744; emissive:#ff1744; emissiveIntensity:0.4; metalness:0.3; roughness:0.2"
+                  class="heart-part"></a-sphere>
 
-            setupSpeechRecognition() {
-                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    this.recognition = new SpeechRecognition();
-                    this.recognition.continuous = true;
-                    this.recognition.interimResults = true;
-                    this.recognition.lang = 'uk-UA';
+        <!-- Права половинка серця -->
+        <a-sphere position="0.25 0.3 0" radius="0.65"
+                  material="color:#ff1744; emissive:#ff1744; emissiveIntensity:0.4; metalness:0.3; roughness:0.2"
+                  class="heart-part"></a-sphere>
 
-                    this.recognition.onstart = () => {
-                        this.isListening = true;
-                        this.updateStatus('🎤 Слухаю твої слова...', '#4CAF50');
-                    };
+        <!-- Верхня виїмка (віднімаємо коробку зверху) -->
+        <a-box position="0 0.9 0" scale="1.4 0.8 1.4" rotation="0 0 0"
+               material="color:#000; opacity:0" 
+               visible="false" class="heart-cut"></a-box>
 
-                    this.recognition.onresult = (event) => {
-                        let finalTranscript = '';
-                        let interimTranscript = '';
+        <!-- Внутрішнє ядро — світиться сильніше -->
+        <a-sphere id="core" position="0 0.25 0" radius="0.4"
+                  material="color:#ff69b4; emissive:#ff69b4; emissiveIntensity:1; shader:flat; transparent:true; opacity:0.8">
+        </a-sphere>
 
-                        for (let i = event.resultIndex; i < event.results.length; i++) {
-                            const transcript = event.results[i][0].transcript;
-                            if (event.results[i].isFinal) {
-                                finalTranscript += transcript;
-                            } else {
-                                interimTranscript += transcript;
-                            }
-                        }
+        <!-- Halo навколо серця -->
+        <a-ring id="halo" position="0 0.25 -0.01" radius-inner="0.9" radius-outer="1.4" rotation="-90 0 0"
+                material="color:#ff1493; shader:flat; side:double; transparent:true; opacity:0.6">
+        </a-ring>
 
-                        this.processSpeech(finalTranscript || interimTranscript);
-                    };
+        <!-- Частинки -->
+        <a-entity id="particles"></a-entity>
+    </a-entity>
 
-                    this.recognition.onerror = (event) => {
-                        console.log('Помилка розпізнавання:', event.error);
-                        this.updateStatus('❌ Помилка мікрофона', '#ff4444');
-                    };
+    <!-- Фонові плаваючі сердечка -->
+    <a-entity id="bg-hearts"></a-entity>
 
-                    this.recognition.onend = () => {
-                        this.isListening = false;
-                        if (Date.now() - this.lastSpeechTime > 3000) {
-                            this.updateStatus('🎤 Натисни для активації', '#ff4081');
-                        }
-                    };
+    <!-- Світло -->
+    <a-light type="ambient" color="#440033" intensity="0.4"></a-light>
+    <a-light type="point" color="#ff3399" intensity="3" distance="10" position="0 3 -2"></a-light>
 
-                    // Запуск при кліку
-                    document.addEventListener('click', () => {
-                        if (!this.isListening) {
-                            this.recognition.start();
-                        }
-                    });
+    <!-- Камера -->
+    <a-camera position="0 1.6 1"></a-camera>
+</a-scene>
 
-                    this.updateStatus('🎤 Натисни будь-де для активації', '#ff4081');
-                } else {
-                    this.updateStatus('❌ Браузер не підтримує розпізнавання мови', '#ff4444');
-                }
-            }
+<script>
+class VoiceHeart {
+    constructor() {
+        this.intensity = 0.4;
+        this.lastLoveTime = 0;
+        this.loveWords = ['кохання','люблю','серце','обійми','поцілунок','милий','коханий','закохана','чарівна','прекрасна','ніжність','щастя','мрія','пристрасть','душа','разом','вічно','ти','тебе'];
 
-            processSpeech(text) {
-                text = text.toLowerCase().trim();
-                document.getElementById('words').textContent = text;
-                
-                // Перевірка на слова кохання
-                const hasLoveWord = this.loveWords.some(word => 
-                    text.toLowerCase().includes(word.toLowerCase())
-                );
+        this.init();
+    }
 
-                if (hasLoveWord) {
-                    this.lastSpeechTime = Date.now();
-                    this.heartIntensity = Math.min(1, this.heartIntensity + 0.2);
-                    this.animateHeart(this.heartIntensity);
-                    this.createLoveParticles();
-                    this.updateStatus('💖 Чую слова кохання!', '#ff4081');
-                    
-                    // Пульсація UI
-                    document.getElementById('words').classList.add('pulse');
-                    setTimeout(() => {
-                        document.getElementById('words').classList.remove('pulse');
-                    }, 500);
-                } else if (Date.now() - this.lastSpeechTime > 2000) {
-                    this.heartIntensity = Math.max(0.3, this.heartIntensity - 0.05);
-                }
-            }
+    init() {
+        this.setupVoice();
+        this.createBgHearts();
+        setInterval(() => this.breathe(), 100);
+    }
 
-            animateHeart(intensity) {
-                const heart = document.querySelector('.heart-main');
-                const glow = document.querySelector('.heart-glow');
-                
-                if (heart && glow) {
-                    // Інтенсивність світіння
-                    heart.setAttribute('material', {
-                        emissiveIntensity: intensity,
-                        color: this.getHeartColor(intensity)
-                    });
-                    
-                    // Анімація пульсації
-                    const scale = 1 + (intensity * 0.3);
-                    heart.setAttribute('animation', {
-                        property: 'scale',
-                        to: `${scale} ${scale} ${scale}`,
-                        dur: 600 / (intensity + 0.5),
-                        easing: 'easeInOutQuad',
-                        loop: true,
-                        dir: 'alternate'
-                    });
-
-                    // Світіння
-                    glow.setAttribute('material', {
-                        opacity: intensity * 0.5,
-                        color: this.getGlowColor(intensity)
-                    });
-                }
-            }
-
-            getHeartColor(intensity) {
-                const r = Math.floor(255 * intensity);
-                const g = Math.floor(50 * (1 - intensity));
-                const b = Math.floor(100 + 155 * intensity);
-                return `#${this.toHex(r)}${this.toHex(g)}${this.toHex(b)}`;
-            }
-
-            getGlowColor(intensity) {
-                const r = Math.floor(255 * intensity);
-                const g = Math.floor(100 * (1 - intensity));
-                const b = Math.floor(150 + 105 * intensity);
-                return `#${this.toHex(r)}${this.toHex(g)}${this.toHex(b)}`;
-            }
-
-            toHex(num) {
-                return num.toString(16).padStart(2, '0');
-            }
-
-            createLoveParticles() {
-                const particlesContainer = document.getElementById('heart-particles');
-                for (let i = 0; i < 5; i++) {
-                    const particle = document.createElement('a-entity');
-                    const angle = Math.random() * Math.PI * 2;
-                    const distance = 1 + Math.random() * 2;
-                    const x = Math.cos(angle) * distance;
-                    const y = Math.sin(angle) * distance * 0.5;
-                    
-                    particle.setAttribute('geometry', {
-                        primitive: 'sphere',
-                        radius: 0.1 + Math.random() * 0.1
-                    });
-                    particle.setAttribute('material', {
-                        color: `#ff${Math.floor(80 + Math.random() * 80).toString(16)}ff`,
-                        emissive: '#ff00ff',
-                        emissiveIntensity: 0.8
-                    });
-                    particle.setAttribute('position', `${x} ${y} 0`);
-                    
-                    particle.setAttribute('animation', {
-                        property: 'position',
-                        to: `${x * 2} ${y * 2 + 2} 0`,
-                        dur: 2000,
-                        easing: 'easeOutQuad'
-                    });
-                    
-                    particle.setAttribute('animation__scale', {
-                        property: 'scale',
-                        to: '0 0 0',
-                        dur: 2000,
-                        easing: 'easeInQuad'
-                    });
-                    
-                    particlesContainer.appendChild(particle);
-                    
-                    setTimeout(() => {
-                        if (particle.parentNode) {
-                            particle.parentNode.removeChild(particle);
-                        }
-                    }, 2000);
-                }
-            }
-
-            createFloatingHearts() {
-                const container = document.getElementById('floating-hearts');
-                for (let i = 0; i < 8; i++) {
-                    const heart = document.createElement('a-entity');
-                    const size = 0.1 + Math.random() * 0.2;
-                    const angle = (i / 8) * Math.PI * 2;
-                    const radius = 3 + Math.random() * 2;
-                    
-                    heart.setAttribute('geometry', {
-                        primitive: 'sphere',
-                        radius: size
-                    });
-                    heart.setAttribute('material', {
-                        color: `#ff${Math.floor(100 + Math.random() * 155).toString(16)}${Math.floor(100 + Math.random() * 155).toString(16)}`,
-                        emissive: true,
-                        emissiveIntensity: 0.3
-                    });
-                    
-                    heart.setAttribute('animation', {
-                        property: 'position',
-                        to: `${Math.cos(angle) * radius} ${2 + Math.sin(Date.now() * 0.001 + i) * 0.5} ${Math.sin(angle) * radius}`,
-                        dur: 3000 + Math.random() * 2000,
-                        easing: 'easeInOutQuad',
-                        loop: true,
-                        dir: 'alternate'
-                    });
-                    
-                    heart.setAttribute('animation__scale', {
-                        property: 'scale',
-                        to: `${size * 1.5} ${size * 1.5} ${size * 1.5}`,
-                        dur: 1500 + Math.random() * 1000,
-                        easing: 'easeInOutQuad',
-                        loop: true,
-                        dir: 'alternate'
-                    });
-                    
-                    container.appendChild(heart);
-                }
-            }
-
-            startHeartbeat() {
-                this.heartbeatInterval = setInterval(() => {
-                    if (Date.now() - this.lastSpeechTime > 5000) {
-                        this.heartIntensity = Math.max(0.3, this.heartIntensity - 0.02);
-                    }
-                    this.animateHeart(this.heartIntensity);
-                }, 100);
-            }
-
-            updateStatus(message, color = '#ff4081') {
-                const status = document.getElementById('status');
-                if (status) {
-                    status.textContent = message;
-                    status.style.color = color;
-                }
-            }
+    setupVoice() {
+        if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+            document.getElementById('status').innerHTML = 'Браузер не підтримує мікрофон';
+            return;
         }
 
-        // Ініціалізація при завантаженні
-        document.addEventListener('DOMContentLoaded', () => {
-            new MagicHeart();
+        const SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'uk-UA';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        recognition.onresult = (e) => {
+            let text = '';
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                text += e.results[i][0].transcript;
+            }
+            this.reactToVoice(text.toLowerCase());
+        };
+
+        recognition.onerror = () => {
+            document.getElementById('status').textContent = 'Помилка мікрофона... спробуй ще';
+        };
+
+        document.body.onclick = () => {
+            if (recognition._started) return;
+            recognition.start();
+            recognition.start();
+            document.getElementById('status').innerHTML = 'Слухаю тебе... ❤️';
+            recognition._started = true;
+        };
+
+        document.getElementById('status').textContent = 'Натисни і говори...';
+    }
+
+    reactToVoice(text) {
+        {
+        document.getElementById('words').textContent = text;
+
+        const hasLove = this.loveWords.some(w => text.includes(w));
+        if (hasLove) {
+            this.lastLoveTime = Date.now();
+            this.intensity = Math.min(1.0, this.intensity + 0.25);
+
+            // Великий пульс
+            document.getElementById('words').classList.add('pulse');
+            setTimeout(() => document.getElementById('words').classList.remove('pulse'), 600);
+
+            this.explodeLove();
+            document.getElementById('status').innerHTML = 'Я чую твоє кохання!!! ❤️‍🔥';
+        }
+    }
+
+    breathe() {
+        // Згасання, якщо давно не чув любові
+        if (Date.now() - this.lastLoveTime > 4000) {
+            this.intensity = Math.max(0.3, this.intensity - 0.008);
+        }
+
+        const heart = document.querySelector('#true-heart');
+        const core = document.querySelector('#core');
+        const halo = document.querySelector('#halo');
+
+        const pulseScale = 1 + this.intensity * 0.4;
+        const pulseSpeed = 800 / (this.intensity + 0.5);
+
+        heart.setAttribute('animation__pulse', {
+            property: 'scale',
+            to: `${pulseScale} ${pulseScale} ${pulseScale}`,
+            dur: pulseSpeed,
+            dir: 'alternate',
+            loop: true,
+            easing: 'easeInOutSine'
         });
 
-        // Додаткові афоризми про кохання
-        const loveQuotes = [
-            "Кохання - це єдине, що зростає, коли ним ділишся",
-            "У коханні немає меж, як у зоряному небі",
-            "Серце бачить те, що невидиме для очей",
-            "Кохання робить сильним навіть найслабшого"
-        ];
+        core.setAttribute('material', 'emissiveIntensity', this.intensity * 1.8);
+        halo.setAttribute('material', 'opacity', this.intensity * 0.8);
 
-        setInterval(() => {
-            const wordsElement = document.getElementById('words');
-            if (wordsElement && !wordsElement.textContent && Math.random() > 0.7) {
-                const randomQuote = loveQuotes[Math.floor(Math.random() * loveQuotes.length)];
-                wordsElement.textContent = randomQuote;
-                setTimeout(() => {
-                    if (wordsElement.textContent === randomQuote) {
-                        wordsElement.textContent = '';
-                    }
-                }, 3000);
-            }
-        }, 5000);
-    </script>
+        // Колір серця стає яскравішим від кохання
+        const r = Math.min(255, 255 * this.intensity);
+        const color = `#ff${(50 + 100*this.intensity).toFixed(0).padStart(2,'0')}99`;
+        document.querySelectorAll('.heart-part').forEach(el => {
+            el.setAttribute('material', { color, emissive: color, emissiveIntensity: this.intensity });
+        });
+    }
+
+    explodeLove() {
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 12; i++) {
+            const p = document.createElement('a-entity');
+            const angle = Math.random() * Math.PI * 2;
+            const force = 1 + Math.random() * 3;
+            const x = Math.cos(angle) * force;
+            const y = Math.sin(angle) * force + 1;
+            const z = (Math.random() - 0.5) * 2;
+
+            p.setAttribute('geometry', 'primitive: tetrahedron; radius: 0.15');
+            p.setAttribute('material', 'color:#ff69b4; emissive:#ff1493; emissiveIntensity:1; metalness:0.8');
+            p.setAttribute('position', '0 0.25 0');
+
+            p.setAttribute('animation', {
+                property: 'position',
+                to: `${x} ${y} ${z}`,
+                dur: 1500 + Math.random() * 1000,
+                easing: 'easeOutCubic'
+            });
+            p.setAttribute('animation__rot', {
+                property: 'rotation',
+                to: `${Math.random()*720} ${Math.random()*720} ${Math.random()*720}`,
+                dur: 2000,
+                easing: 'linear',
+                loop: true
+            });
+            p.setAttribute('animation__fade', {
+                property: 'scale',
+                to: '0 0 0',
+                dur: 2000,
+                delay: 800
+            });
+
+            container.appendChild(p);
+            setTimeout(() => p.remove(), 3000);
+        }
+    }
+
+    createBgHearts() {
+        const container = document.getElementById('bg-hearts');
+        for (let i = 0; i < 10; i++) {
+            const h = document.createElement('a-entity');
+            const r = 4 + Math.random() * 4;
+            const angle = Math.random() * Math.PI * 2;
+            const height = 0.5 + Math.random() * 3;
+
+            h.setAttribute('gltf-model', '#heartModel'); // можна додати модель, але працює і без
+            h.setAttribute('scale', '0.3 0.3 0.3');
+            h.setAttribute('position', `${Math.cos(angle)*r} ${height} ${Math.sin(angle)*r}`);
+            h.setAttribute('material', 'color:#ff69b4; emissive:#ff1493; emissiveIntensity:0.5; transparent:true; opacity:0.7');
+
+            h.setAttribute('animation', {
+                property: 'rotation',
+                to: '0 360 0',
+                dur: 10000 + Math.random()*10000,
+                loop: true,
+                easing: 'linear'
+            });
+            h.setAttribute('animation__float', {
+                property: 'position.y',
+                to: height + 1.5,
+                dur: 4000 + Math.random()*4000,
+                dir: 'alternate',
+                loop: true,
+                easing: 'easeInOutSine'
+            });
+
+            container.appendChild(h);
+        }
+    }
+}
+
+// Запуск
+new VoiceHeart();
+</script>
 </body>
 </html>
