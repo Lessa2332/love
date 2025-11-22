@@ -2,332 +2,367 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="AR-сцена зі свічкою для дітей">
-    <title>🕯️«Свічка на долоні» 🔥</title>
-
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Магічне серце кохання</title>
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
     <style>
-        html, body {
+        body {
             margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
+            background: #000;
             overflow: hidden;
-            background: transparent;
+            font-family: 'Arial', sans-serif;
         }
-        
-        a-scene {
-            width: 100% !important;
-            height: 100% !important;
+        #ui {
             position: fixed;
-            top: 0;
-            left: 0;
-            background: transparent;
-        }
-
-        .arjs-loader {
-            height: 100%;
-            width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            background: rgba(135, 206, 235, 0.2);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #FF4500;
-            font-size: 1.8em;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
             text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
-            font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+            z-index: 1000;
+            background: rgba(255, 0, 85, 0.3);
+            padding: 15px 30px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
         }
-
+        #status {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        #words {
+            font-size: 24px;
+            color: #ff4081;
+            font-weight: bold;
+            min-height: 32px;
+        }
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
-
-        .pulse { animation: pulse 1.5s infinite; }
-
-        .controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10000;
-            display: flex;
-            gap: 10px;
-        }
-
-        .sound-btn, .youtube-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 15px;
-            cursor: pointer;
-            font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
-            font-size: 1em;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-decoration: none;
-        }
-
-        .sound-btn { background-color: #4CAF50; color: white; }
-        .sound-btn.off { background-color: #f44336; }
-        .youtube-btn { background-color: #FF9800; color: white; }
-        .youtube-btn:hover { background-color: #FFB300; }
     </style>
 </head>
 <body>
-    <div class="arjs-loader" id="loader">
-        <div class="pulse">🕯️ Свічка на долоні 🔥</div>
-        <div style="margin-top: 20px; font-size: 1.2em;">Наведи камеру на маркер! 😊🔥</div>
+    <div id="ui">
+        <div id="status">🎤 Говори слова кохання...</div>
+        <div id="words"></div>
     </div>
 
-    <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind;"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false"
-        loading-screen="enabled: false"
-        embedded
-        renderer="colorManagement: true; physicallyCorrectLights: true;"
-        touch-gestures
-    >
-        <!-- Освітлення для коректного відображення PBR-матеріалів -->
-        <a-entity light="type: ambient; color: #FFFFFF; intensity: 1"></a-entity>
-        <a-entity light="type: directional; color: #FFFFFF; intensity: 0.7" position="2 3 1"></a-entity>
-
-        <a-assets>
-            <audio id="bg-music" src="./message.mp3" preload="auto" loop></audio>
-            <img id="flame-texture" src="https://png.pngtree.com/png-clipart/20190611/original/pngtree-fire-particle-effects-png-image_3009882.jpg">
-        </a-assets>
-
-        <a-camera
-            id="camera"
-            position="0 0 1.5"
-            look-controls="enabled: false"
-        ></a-camera>
-
-        <a-entity mindar-image-target="targetIndex: 0">
-            <a-entity id="candle" position="0 0 -0.5" scale="0.5 0.5 0.5" visible="false">
-                <!-- 3D модель свічки -->
-                <a-gltf-model id="candle-body" src="./candle.glb" position="0 0 0"></a-gltf-model>
-                
-                <!-- Полум'я -->
-                <a-entity id="flame" position="0 0.4 0" rotation="-90 0 0" particle-system="texture: #flame-texture; color: #FFA500,#FF4500,#FF0000; blending: additive; size: 0.05 0.2; particleCount: 100; maxAge: 1; velocityValue: 0 1 0; velocitySpread: 0.1 0.2 0.1; accelerationValue: 0 0.5 0; opacity: 1 0 0; rotation: true"></a-entity>
-                
-                <!-- Світло від полум'я -->
-                <a-light id="flame-light" type="point" color="#FF4500" intensity="1" distance="5" position="0 0.45 0"></a-light>
+    <a-scene background="color: #000011">
+        <!-- Магічне серце -->
+        <a-entity id="magic-heart" position="0 1.5 -3">
+            <!-- Основне серце -->
+            <a-entity class="heart-main" geometry="primitive: sphere; radius: 0.5"
+                     material="color: #ff0055; shader: flat; emissive: #ff0055; emissiveIntensity: 0.3"
+                     animation="property: scale; to: 1.2 1.2 1.2; dur: 500; easing: easeInOutQuad; loop: true; dir: alternate">
             </a-entity>
+            
+            <!-- Внутрішнє світіння -->
+            <a-entity class="heart-glow" geometry="primitive: sphere; radius: 0.6"
+                     material="color: #ff1493; transparent: true; opacity: 0.3; shader: flat"
+                     animation="property: scale; to: 1.1 1.1 1.1; dur: 400; easing: easeInOutQuad; loop: true; dir: alternate">
+            </a-entity>
+            
+            <!-- Частинки світіння навколо -->
+            <a-entity id="heart-particles"></a-entity>
         </a-entity>
+
+        <!-- Додаткові декоративні елементи -->
+        <a-entity id="floating-hearts"></a-entity>
+        
+        <!-- Камера -->
+        <a-camera position="0 1.6 0"></a-camera>
+        
+        <!-- Джерела світла -->
+        <a-light type="point" color="#ff0066" intensity="2" position="2 3 2"></a-light>
+        <a-light type="point" color="#ff1493" intensity="1.5" position="-2 2 -1"></a-light>
+        <a-light type="ambient" color="#4455ff" intensity="0.3"></a-light>
     </a-scene>
 
-    <div class="controls">
-        <button id="sound-btn" class="sound-btn">Увімкнути звук</button>
-        <button id="mic-btn" class="sound-btn">Увімкнути мікрофон</button>
-        <a href="https://www.youtube.com/playlist?list=PL6UDFwT9TzFw5K8Tzu_OgsDz7vV3N9eY-" target="_blank" class="youtube-btn">YouTube SmartLessa</a>
-    </div>
-
     <script>
-        // Адаптивність для повного екрану
-        function fixHeight() {
-            document.body.style.height = window.innerHeight + 'px';
-        }
-        fixHeight();
-        window.addEventListener('resize', fixHeight);
+        class MagicHeart {
+            constructor() {
+                this.recognition = null;
+                this.isListening = false;
+                this.heartbeatInterval = null;
+                this.lastSpeechTime = 0;
+                this.heartIntensity = 0.3;
+                this.loveWords = [
+                    'кохання', 'любов', 'любий', 'коханий', 'милий', 'серце', 'щастя',
+                    'ніжність', 'турбота', 'пристрасть', 'романтика', 'обійми', 'поцілунок',
+                    'закоханий', 'мрія', 'чудовий', 'прекрасний', 'чарівний', 'незабутній'
+                ];
+                
+                this.init();
+            }
 
-        // Посилання на елементи
-        const loader = document.querySelector('#loader');
-        const targetEntity = document.querySelector('[mindar-image-target]');
-        const candle = document.querySelector('#candle');
-        const flame = document.querySelector('#flame');
-        const flameLight = document.querySelector('#flame-light');
-        const bgMusic = document.querySelector('#bg-music');
-        const soundBtn = document.querySelector('#sound-btn');
-        const micBtn = document.querySelector('#mic-btn');
+            init() {
+                this.setupSpeechRecognition();
+                this.createFloatingHearts();
+                this.startHeartbeat();
+                
+                // Початкова анімація
+                this.animateHeart(0.5);
+            }
 
-        let audioContext, analyser, dataArray, micStream;
-        let baseVelocityY = 1;
-        let baseAccelerationY = 0.5;
-        let baseSizeMax = 0.2;
+            setupSpeechRecognition() {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = true;
+                    this.recognition.interimResults = true;
+                    this.recognition.lang = 'uk-UA';
 
-        // Компонент для обробки сенсорних жестів
-        AFRAME.registerComponent('touch-gestures', {
-            schema: {
-                minScale: { type: 'number', default: 0.2 },
-                maxScale: { type: 'number', default: 3.0 },
-                rotationSpeed: { type: 'number', default: 2.0 }
-            },
-            init: function () {
-                this.isRotating = false;
-                this.isPinching = false;
-                this.startPos = { x: 0, y: 0 };
-                this.currentScale = 1;
-                this.candle = document.querySelector('#candle');
+                    this.recognition.onstart = () => {
+                        this.isListening = true;
+                        this.updateStatus('🎤 Слухаю твої слова...', '#4CAF50');
+                    };
 
-                if (!this.candle) {
-                    console.error('Свічка не знайдена в компоненті touch-gestures');
-                    return;
+                    this.recognition.onresult = (event) => {
+                        let finalTranscript = '';
+                        let interimTranscript = '';
+
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            const transcript = event.results[i][0].transcript;
+                            if (event.results[i].isFinal) {
+                                finalTranscript += transcript;
+                            } else {
+                                interimTranscript += transcript;
+                            }
+                        }
+
+                        this.processSpeech(finalTranscript || interimTranscript);
+                    };
+
+                    this.recognition.onerror = (event) => {
+                        console.log('Помилка розпізнавання:', event.error);
+                        this.updateStatus('❌ Помилка мікрофона', '#ff4444');
+                    };
+
+                    this.recognition.onend = () => {
+                        this.isListening = false;
+                        if (Date.now() - this.lastSpeechTime > 3000) {
+                            this.updateStatus('🎤 Натисни для активації', '#ff4081');
+                        }
+                    };
+
+                    // Запуск при кліку
+                    document.addEventListener('click', () => {
+                        if (!this.isListening) {
+                            this.recognition.start();
+                        }
+                    });
+
+                    this.updateStatus('🎤 Натисни будь-де для активації', '#ff4081');
+                } else {
+                    this.updateStatus('❌ Браузер не підтримує розпізнавання мови', '#ff4444');
                 }
+            }
 
-                this.el.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    if (e.touches.length === 1) {
-                        this.isRotating = true;
-                        this.startPos.x = e.touches[0].pageX;
-                        this.startPos.y = e.touches[0].pageY;
-                    } else if (e.touches.length === 2) {
-                        this.isPinching = true;
-                        this.isRotating = false;
-                        this.initialDistance = Math.hypot(
-                            e.touches[0].pageX - e.touches[1].pageX,
-                            e.touches[0].pageY - e.touches[1].pageY
-                        );
-                        this.currentScale = this.candle.object3D.scale.x;
+            processSpeech(text) {
+                text = text.toLowerCase().trim();
+                document.getElementById('words').textContent = text;
+                
+                // Перевірка на слова кохання
+                const hasLoveWord = this.loveWords.some(word => 
+                    text.toLowerCase().includes(word.toLowerCase())
+                );
+
+                if (hasLoveWord) {
+                    this.lastSpeechTime = Date.now();
+                    this.heartIntensity = Math.min(1, this.heartIntensity + 0.2);
+                    this.animateHeart(this.heartIntensity);
+                    this.createLoveParticles();
+                    this.updateStatus('💖 Чую слова кохання!', '#ff4081');
+                    
+                    // Пульсація UI
+                    document.getElementById('words').classList.add('pulse');
+                    setTimeout(() => {
+                        document.getElementById('words').classList.remove('pulse');
+                    }, 500);
+                } else if (Date.now() - this.lastSpeechTime > 2000) {
+                    this.heartIntensity = Math.max(0.3, this.heartIntensity - 0.05);
+                }
+            }
+
+            animateHeart(intensity) {
+                const heart = document.querySelector('.heart-main');
+                const glow = document.querySelector('.heart-glow');
+                
+                if (heart && glow) {
+                    // Інтенсивність світіння
+                    heart.setAttribute('material', {
+                        emissiveIntensity: intensity,
+                        color: this.getHeartColor(intensity)
+                    });
+                    
+                    // Анімація пульсації
+                    const scale = 1 + (intensity * 0.3);
+                    heart.setAttribute('animation', {
+                        property: 'scale',
+                        to: `${scale} ${scale} ${scale}`,
+                        dur: 600 / (intensity + 0.5),
+                        easing: 'easeInOutQuad',
+                        loop: true,
+                        dir: 'alternate'
+                    });
+
+                    // Світіння
+                    glow.setAttribute('material', {
+                        opacity: intensity * 0.5,
+                        color: this.getGlowColor(intensity)
+                    });
+                }
+            }
+
+            getHeartColor(intensity) {
+                const r = Math.floor(255 * intensity);
+                const g = Math.floor(50 * (1 - intensity));
+                const b = Math.floor(100 + 155 * intensity);
+                return `#${this.toHex(r)}${this.toHex(g)}${this.toHex(b)}`;
+            }
+
+            getGlowColor(intensity) {
+                const r = Math.floor(255 * intensity);
+                const g = Math.floor(100 * (1 - intensity));
+                const b = Math.floor(150 + 105 * intensity);
+                return `#${this.toHex(r)}${this.toHex(g)}${this.toHex(b)}`;
+            }
+
+            toHex(num) {
+                return num.toString(16).padStart(2, '0');
+            }
+
+            createLoveParticles() {
+                const particlesContainer = document.getElementById('heart-particles');
+                for (let i = 0; i < 5; i++) {
+                    const particle = document.createElement('a-entity');
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 1 + Math.random() * 2;
+                    const x = Math.cos(angle) * distance;
+                    const y = Math.sin(angle) * distance * 0.5;
+                    
+                    particle.setAttribute('geometry', {
+                        primitive: 'sphere',
+                        radius: 0.1 + Math.random() * 0.1
+                    });
+                    particle.setAttribute('material', {
+                        color: `#ff${Math.floor(80 + Math.random() * 80).toString(16)}ff`,
+                        emissive: '#ff00ff',
+                        emissiveIntensity: 0.8
+                    });
+                    particle.setAttribute('position', `${x} ${y} 0`);
+                    
+                    particle.setAttribute('animation', {
+                        property: 'position',
+                        to: `${x * 2} ${y * 2 + 2} 0`,
+                        dur: 2000,
+                        easing: 'easeOutQuad'
+                    });
+                    
+                    particle.setAttribute('animation__scale', {
+                        property: 'scale',
+                        to: '0 0 0',
+                        dur: 2000,
+                        easing: 'easeInQuad'
+                    });
+                    
+                    particlesContainer.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        if (particle.parentNode) {
+                            particle.parentNode.removeChild(particle);
+                        }
+                    }, 2000);
+                }
+            }
+
+            createFloatingHearts() {
+                const container = document.getElementById('floating-hearts');
+                for (let i = 0; i < 8; i++) {
+                    const heart = document.createElement('a-entity');
+                    const size = 0.1 + Math.random() * 0.2;
+                    const angle = (i / 8) * Math.PI * 2;
+                    const radius = 3 + Math.random() * 2;
+                    
+                    heart.setAttribute('geometry', {
+                        primitive: 'sphere',
+                        radius: size
+                    });
+                    heart.setAttribute('material', {
+                        color: `#ff${Math.floor(100 + Math.random() * 155).toString(16)}${Math.floor(100 + Math.random() * 155).toString(16)}`,
+                        emissive: true,
+                        emissiveIntensity: 0.3
+                    });
+                    
+                    heart.setAttribute('animation', {
+                        property: 'position',
+                        to: `${Math.cos(angle) * radius} ${2 + Math.sin(Date.now() * 0.001 + i) * 0.5} ${Math.sin(angle) * radius}`,
+                        dur: 3000 + Math.random() * 2000,
+                        easing: 'easeInOutQuad',
+                        loop: true,
+                        dir: 'alternate'
+                    });
+                    
+                    heart.setAttribute('animation__scale', {
+                        property: 'scale',
+                        to: `${size * 1.5} ${size * 1.5} ${size * 1.5}`,
+                        dur: 1500 + Math.random() * 1000,
+                        easing: 'easeInOutQuad',
+                        loop: true,
+                        dir: 'alternate'
+                    });
+                    
+                    container.appendChild(heart);
+                }
+            }
+
+            startHeartbeat() {
+                this.heartbeatInterval = setInterval(() => {
+                    if (Date.now() - this.lastSpeechTime > 5000) {
+                        this.heartIntensity = Math.max(0.3, this.heartIntensity - 0.02);
                     }
-                });
+                    this.animateHeart(this.heartIntensity);
+                }, 100);
+            }
 
-                this.el.addEventListener('touchmove', (e) => {
-                    e.preventDefault();
-                    if (this.isPinching && e.touches.length === 2) {
-                        const currentDistance = Math.hypot(
-                            e.touches[0].pageX - e.touches[1].pageX,
-                            e.touches[0].pageY - e.touches[1].pageY
-                        );
-                        const scaleFactor = currentDistance / this.initialDistance;
-                        const newScale = Math.max(this.data.minScale, Math.min(this.data.maxScale, this.currentScale * scaleFactor));
-                        this.candle.object3D.scale.set(newScale, newScale, newScale);
-                    } else if (this.isRotating && e.touches.length === 1) {
-                        const deltaX = (e.touches[0].pageX - this.startPos.x) * this.data.rotationSpeed;
-                        const deltaY = (e.touches[0].pageY - this.startPos.y) * this.data.rotationSpeed;
-                        this.candle.object3D.rotation.y += THREE.MathUtils.degToRad(deltaX);
-                        this.candle.object3D.rotation.x += THREE.MathUtils.degToRad(deltaY);
-                        this.startPos.x = e.touches[0].pageX;
-                        this.startPos.y = e.touches[0].pageY;
+            updateStatus(message, color = '#ff4081') {
+                const status = document.getElementById('status');
+                if (status) {
+                    status.textContent = message;
+                    status.style.color = color;
+                }
+            }
+        }
+
+        // Ініціалізація при завантаженні
+        document.addEventListener('DOMContentLoaded', () => {
+            new MagicHeart();
+        });
+
+        // Додаткові афоризми про кохання
+        const loveQuotes = [
+            "Кохання - це єдине, що зростає, коли ним ділишся",
+            "У коханні немає меж, як у зоряному небі",
+            "Серце бачить те, що невидиме для очей",
+            "Кохання робить сильним навіть найслабшого"
+        ];
+
+        setInterval(() => {
+            const wordsElement = document.getElementById('words');
+            if (wordsElement && !wordsElement.textContent && Math.random() > 0.7) {
+                const randomQuote = loveQuotes[Math.floor(Math.random() * loveQuotes.length)];
+                wordsElement.textContent = randomQuote;
+                setTimeout(() => {
+                    if (wordsElement.textContent === randomQuote) {
+                        wordsElement.textContent = '';
                     }
-                });
-
-                this.el.addEventListener('touchend', () => {
-                    this.isRotating = false;
-                    this.isPinching = false;
-                });
+                }, 3000);
             }
-        });
-
-        // Функція для ініціалізації мікрофона та аналізу аудіо
-        async function initMic() {
-            try {
-                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioContext.createMediaStreamSource(micStream);
-                analyser = audioContext.createAnalyser();
-                analyser.fftSize = 256;
-                source.connect(analyser);
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
-                micBtn.classList.remove('off');
-                micBtn.textContent = 'Вимкнути мікрофон';
-                updateFlame();
-            } catch (err) {
-                console.error('Помилка доступу до мікрофона:', err);
-                micBtn.classList.add('off');
-                micBtn.textContent = 'Мікрофон недоступний';
-            }
-        }
-
-        // Функція для оновлення полум'я на основі гучності
-        function updateFlame() {
-            if (!analyser) return;
-            analyser.getByteFrequencyData(dataArray);
-            let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-                sum += dataArray[i];
-            }
-            const avg = sum / dataArray.length;
-            const volume = Math.min(1, avg / 128);
-
-            const velocityY = baseVelocityY + volume * 1;
-            const accelerationY = baseAccelerationY + volume * 0.5;
-            const sizeMax = baseSizeMax + volume * 0.1;
-            flame.setAttribute('particle-system', {
-                velocityValue: `0 ${velocityY} 0`,
-                accelerationValue: `0 ${accelerationY} 0`,
-                size: `0.05 ${sizeMax}`
-            });
-
-            const lightIntensity = 1 + volume * 4;
-            flameLight.setAttribute('intensity', lightIntensity);
-
-            requestAnimationFrame(updateFlame);
-        }
-
-        // Логіка відстеження маркера
-        if (targetEntity) {
-            targetEntity.addEventListener('targetFound', () => {
-                console.log("🎯 Маркер знайдено! Свічка з'явилася.");
-                loader.style.display = 'none';
-                if (candle) {
-                    candle.setAttribute('visible', 'true');
-                }
-                if (bgMusic && bgMusic.paused) {
-                    bgMusic.play().catch(e => console.log("🔇 Помилка відтворення музики:", e));
-                    soundBtn.classList.remove('off');
-                    soundBtn.textContent = 'Вимкнути звук';
-                }
-            });
-
-            targetEntity.addEventListener('targetLost', () => {
-                console.log("ℹ️ Маркер втрачено.");
-                if (candle) {
-                    candle.setAttribute('visible', 'false');
-                }
-                if (bgMusic && !bgMusic.paused) bgMusic.pause();
-                loader.style.display = 'flex';
-                loader.querySelector('.pulse').textContent = '🕯️ Свічка на долоні 🔥';
-                loader.querySelector('div[style]').textContent = 'Наведи камеру на маркер! 😊🔥';
-            });
-        } else {
-            console.error('Елемент mindar-image-target не знайдено!');
-        }
-
-        // Обробка кнопки звуку
-        soundBtn.addEventListener('click', () => {
-            if (bgMusic.paused) {
-                bgMusic.play().catch(e => console.log("🔇 Помилка відтворення музики:", e));
-                soundBtn.classList.remove('off');
-                soundBtn.textContent = 'Вимкнути звук';
-            } else {
-                bgMusic.pause();
-                soundBtn.classList.add('off');
-                soundBtn.textContent = 'Увімкнути звук';
-            }
-        });
-
-        // Обробка кнопки мікрофона
-        micBtn.addEventListener('click', () => {
-            if (!analyser) {
-                initMic();
-            } else {
-                if (micStream) {
-                    micStream.getTracks().forEach(track => track.stop());
-                }
-                if (audioContext) audioContext.close();
-                analyser = null;
-                micBtn.classList.add('off');
-                micBtn.textContent = 'Увімкнути мікрофон';
-                flame.setAttribute('particle-system', {
-                    velocityValue: `0 ${baseVelocityY} 0`,
-                    accelerationValue: `0 ${baseAccelerationY} 0`,
-                    size: `0.05 ${baseSizeMax}`
-                });
-                flameLight.setAttribute('intensity', 1);
-            }
-        });
+        }, 5000);
     </script>
 </body>
 </html>
