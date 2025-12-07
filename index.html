@@ -1,271 +1,477 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Твоє серце б'ється від мого голосу ❤️</title>
-    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
-    <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
-        #ui {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            text-align: center;
-            z-index: 1000;
-            background: rgba(255, 20, 147, 0.25);
-            padding: 15px 40px;
-            border-radius: 30px;
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 105, 180, 0.3);
-        }
-        #status { font-size: 20px; margin-bottom: 8px; }
-        #words { 
-            font-size: 28px; 
-            color: #ff69b4; 
-            font-weight: bold; 
-            text-shadow: 0 0 20px #ff1493;
-            min-height: 40px;
-        }
-        .pulse { animation: bigpulse 0.6s cubic-bezier(0.4, 0, 0.6, 1); }
-        @keyframes bigpulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.25); }
-            100% { transform: scale(1); }
-        }
-    </style>
-</head>
-<body>
-
-<div id="ui">
-    <div id="status">Натисни будь-де і скажи слова кохання...</div>
-    <div id="words"></div>
-</div>
-
-<a-scene background="color: #000011" embedded style="width:100%; height:100vh;">
-
-    <!-- РЕАЛЬНЕ СЕРЦЕ З ПРИМИТИВІВ -->
-    <a-entity id="true-heart" position="0 1.6 -3" rotation="0 0 0">
-
-        <!-- Ліва половинка серця -->
-        <a-sphere position="-0.25 0.3 0" radius="0.65"
-                  material="color:#ff1744; emissive:#ff1744; emissiveIntensity:0.4; metalness:0.3; roughness:0.2"
-                  class="heart-part"></a-sphere>
-
-        <!-- Права половинка серця -->
-        <a-sphere position="0.25 0.3 0" radius="0.65"
-                  material="color:#ff1744; emissive:#ff1744; emissiveIntensity:0.4; metalness:0.3; roughness:0.2"
-                  class="heart-part"></a-sphere>
-
-        <!-- Верхня виїмка (віднімаємо коробку зверху) -->
-        <a-box position="0 0.9 0" scale="1.4 0.8 1.4" rotation="0 0 0"
-               material="color:#000; opacity:0" 
-               visible="false" class="heart-cut"></a-box>
-
-        <!-- Внутрішнє ядро — світиться сильніше -->
-        <a-sphere id="core" position="0 0.25 0" radius="0.4"
-                  material="color:#ff69b4; emissive:#ff69b4; emissiveIntensity:1; shader:flat; transparent:true; opacity:0.8">
-        </a-sphere>
-
-        <!-- Halo навколо серця -->
-        <a-ring id="halo" position="0 0.25 -0.01" radius-inner="0.9" radius-outer="1.4" rotation="-90 0 0"
-                material="color:#ff1493; shader:flat; side:double; transparent:true; opacity:0.6">
-        </a-ring>
-
-        <!-- Частинки -->
-        <a-entity id="particles"></a-entity>
-    </a-entity>
-
-    <!-- Фонові плаваючі сердечка -->
-    <a-entity id="bg-hearts"></a-entity>
-
-    <!-- Світло -->
-    <a-light type="ambient" color="#440033" intensity="0.4"></a-light>
-    <a-light type="point" color="#ff3399" intensity="3" distance="10" position="0 3 -2"></a-light>
-
-    <!-- Камера -->
-    <a-camera position="0 1.6 1"></a-camera>
-</a-scene>
-
-<script>
-class VoiceHeart {
-    constructor() {
-        this.intensity = 0.4;
-        this.lastLoveTime = 0;
-        this.loveWords = ['кохання','люблю','серце','обійми','поцілунок','милий','коханий','закохана','чарівна','прекрасна','ніжність','щастя','мрія','пристрасть','душа','разом','вічно','ти','тебе'];
-
-        this.init();
+<!doctype html>
+<html lang="ru">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Таймер медитації</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
     }
 
-    init() {
-        this.setupVoice();
-        this.createBgHearts();
-        setInterval(() => this.breathe(), 100);
+    * {
+      box-sizing: border-box;
     }
 
-    setupVoice() {
-        if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-            document.getElementById('status').innerHTML = 'Браузер не підтримує мікрофон';
-            return;
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+    }
+
+    .timer-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 30px;
+      padding: 60px 50px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      font-weight: 800;
+      color: #667eea;
+      margin: 0 0 40px 0;
+      letter-spacing: -1px;
+    }
+
+    .timer-display {
+      font-size: 5em;
+      font-weight: 900;
+      color: #2d3748;
+      margin: 40px 0;
+      letter-spacing: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .timer-display.pulse {
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+      }
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 18px 40px;
+      font-size: 1.1em;
+      font-weight: 700;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .start-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .start-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .start-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .pause-btn {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+
+    .pause-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+    }
+
+    .reset-btn {
+      background: #e2e8f0;
+      color: #2d3748;
+    }
+
+    .reset-btn:hover:not(:disabled) {
+      background: #cbd5e0;
+      transform: translateY(-2px);
+    }
+
+    .completion-message {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: #667eea;
+      margin-top: 20px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .completion-message.show {
+      opacity: 1;
+    }
+
+    .progress-ring {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 0 auto;
+    }
+
+    .progress-ring-circle {
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    .progress-ring-bg {
+      fill: none;
+      stroke: #e2e8f0;
+      stroke-width: 8;
+    }
+
+    .progress-ring-progress {
+      fill: none;
+      stroke: url(#gradient);
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear;
+    }
+
+    @media (max-width: 600px) {
+      .timer-card {
+        padding: 40px 30px;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      .timer-display {
+        font-size: 3.5em;
+      }
+
+      button {
+        padding: 15px 30px;
+        font-size: 1em;
+      }
+
+      .progress-ring {
+        width: 260px;
+        height: 260px;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <main class="container">
+   <div class="timer-card">
+    <h1 id="timer-title">Медитація</h1>
+    <div class="progress-ring">
+     <svg width="320" height="320"><defs>
+       <lineargradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+       </lineargradient>
+      </defs> <circle class="progress-ring-bg" cx="160" cy="160" r="140" /> <circle class="progress-ring-circle progress-ring-progress" cx="160" cy="160" r="140" id="progress-circle" />
+     </svg>
+     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+      <div class="timer-display" id="timer-display">
+       15:00
+      </div>
+     </div>
+    </div>
+    <div class="controls"><button class="start-btn" id="start-btn">Розпочати</button> <button class="pause-btn" id="pause-btn" disabled>Пауза</button> <button class="reset-btn" id="reset-btn">Сбросить</button>
+    </div>
+    <div class="completion-message" id="completion-message">
+     Час закінчився!
+    </div>
+   </div>
+  </main>
+  <script>
+    const defaultConfig = {
+      timer_title: "Медитация",
+      start_button_text: "Начать",
+      pause_button_text: "Пауза",
+      reset_button_text: "Сбросить",
+      completion_message: "Время вышло!",
+      background_gradient_start: "#667eea",
+      background_gradient_end: "#764ba2",
+      primary_color: "#667eea",
+      card_background: "#ffffff",
+      text_color: "#2d3748",
+      font_family: "Segoe UI",
+      font_size: 16
+    };
+
+    let config = { ...defaultConfig };
+    let totalSeconds = 15 * 60;
+    let remainingSeconds = totalSeconds;
+    let timerInterval = null;
+    let isRunning = false;
+    let isPaused = false;
+
+    const timerDisplay = document.getElementById('timer-display');
+    const startBtn = document.getElementById('start-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const completionMessage = document.getElementById('completion-message');
+    const progressCircle = document.getElementById('progress-circle');
+    const timerTitle = document.getElementById('timer-title');
+
+    const radius = 140;
+    const circumference = 2 * Math.PI * radius;
+    progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+    progressCircle.style.strokeDashoffset = '0';
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateProgressRing() {
+      const progress = remainingSeconds / totalSeconds;
+      const offset = circumference - (progress * circumference);
+      progressCircle.style.strokeDashoffset = offset;
+    }
+
+    function playTickSound() {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+    }
+
+    function playCompletionSound() {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      [523.25, 659.25, 783.99].forEach((freq, index) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = freq;
+        oscillator.type = 'sine';
+        
+        const startTime = audioContext.currentTime + (index * 0.2);
+        gainNode.gain.setValueAtTime(0.2, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.5);
+        
+        oscillator.start(startTime);
+        oscillator.stop(startTime + 0.5);
+      });
+    }
+
+    function startTimer() {
+      if (isRunning && !isPaused) return;
+      
+      isRunning = true;
+      isPaused = false;
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      timerDisplay.classList.add('pulse');
+      completionMessage.classList.remove('show');
+
+      timerInterval = setInterval(() => {
+        remainingSeconds--;
+        timerDisplay.textContent = formatTime(remainingSeconds);
+        updateProgressRing();
+
+        if (remainingSeconds <= 10 && remainingSeconds > 0) {
+          playTickSound();
         }
 
-        const SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'uk-UA';
-        recognition.continuous = true;
-        recognition.interimResults = true;
+        if (remainingSeconds <= 0) {
+          clearInterval(timerInterval);
+          isRunning = false;
+          startBtn.disabled = false;
+          pauseBtn.disabled = true;
+          timerDisplay.classList.remove('pulse');
+          completionMessage.classList.add('show');
+          playCompletionSound();
+        }
+      }, 1000);
+    }
 
-        recognition.onresult = (e) => {
-            let text = '';
-            for (let i = e.resultIndex; i < e.results.length; i++) {
-                text += e.results[i][0].transcript;
+    function pauseTimer() {
+      if (!isRunning) return;
+      
+      clearInterval(timerInterval);
+      isPaused = true;
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      timerDisplay.classList.remove('pulse');
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      remainingSeconds = totalSeconds;
+      isRunning = false;
+      isPaused = false;
+      timerDisplay.textContent = formatTime(remainingSeconds);
+      timerDisplay.classList.remove('pulse');
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      completionMessage.classList.remove('show');
+      updateProgressRing();
+    }
+
+    startBtn.addEventListener('click', startTimer);
+    pauseBtn.addEventListener('click', pauseTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    async function onConfigChange(newConfig) {
+      config = { ...config, ...newConfig };
+      
+      timerTitle.textContent = config.timer_title || defaultConfig.timer_title;
+      startBtn.textContent = config.start_button_text || defaultConfig.start_button_text;
+      pauseBtn.textContent = config.pause_button_text || defaultConfig.pause_button_text;
+      resetBtn.textContent = config.reset_button_text || defaultConfig.reset_button_text;
+      completionMessage.textContent = config.completion_message || defaultConfig.completion_message;
+
+      const container = document.querySelector('.container');
+      const bgStart = config.background_gradient_start || defaultConfig.background_gradient_start;
+      const bgEnd = config.background_gradient_end || defaultConfig.background_gradient_end;
+      container.style.background = `linear-gradient(135deg, ${bgStart} 0%, ${bgEnd} 100%)`;
+
+      const card = document.querySelector('.timer-card');
+      card.style.background = `rgba(255, 255, 255, 0.95)`;
+
+      timerTitle.style.color = config.primary_color || defaultConfig.primary_color;
+      timerDisplay.style.color = config.text_color || defaultConfig.text_color;
+      completionMessage.style.color = config.primary_color || defaultConfig.primary_color;
+
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
+      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+
+      const baseSize = config.font_size || defaultConfig.font_size;
+      timerTitle.style.fontSize = `${baseSize * 2.5}px`;
+      timerDisplay.style.fontSize = `${baseSize * 5}px`;
+      completionMessage.style.fontSize = `${baseSize * 1.8}px`;
+      document.querySelectorAll('button').forEach(btn => {
+        btn.style.fontSize = `${baseSize * 1.1}px`;
+      });
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_gradient_start || defaultConfig.background_gradient_start,
+              set: (value) => {
+                config.background_gradient_start = value;
+                window.elementSdk.setConfig({ background_gradient_start: value });
+              }
+            },
+            {
+              get: () => config.background_gradient_end || defaultConfig.background_gradient_end,
+              set: (value) => {
+                config.background_gradient_end = value;
+                window.elementSdk.setConfig({ background_gradient_end: value });
+              }
+            },
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => {
+                config.primary_color = value;
+                window.elementSdk.setConfig({ primary_color: value });
+              }
+            },
+            {
+              get: () => config.card_background || defaultConfig.card_background,
+              set: (value) => {
+                config.card_background = value;
+                window.elementSdk.setConfig({ card_background: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
             }
-            this.reactToVoice(text.toLowerCase());
-        };
-
-        recognition.onerror = () => {
-            document.getElementById('status').textContent = 'Помилка мікрофона... спробуй ще';
-        };
-
-        document.body.onclick = () => {
-            if (recognition._started) return;
-            recognition.start();
-            recognition.start();
-            document.getElementById('status').innerHTML = 'Слухаю тебе... ❤️';
-            recognition._started = true;
-        };
-
-        document.getElementById('status').textContent = 'Натисни і говори...';
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['timer_title', config.timer_title || defaultConfig.timer_title],
+          ['start_button_text', config.start_button_text || defaultConfig.start_button_text],
+          ['pause_button_text', config.pause_button_text || defaultConfig.pause_button_text],
+          ['reset_button_text', config.reset_button_text || defaultConfig.reset_button_text],
+          ['completion_message', config.completion_message || defaultConfig.completion_message]
+        ])
+      });
     }
 
-    reactToVoice(text) {
-        {
-        document.getElementById('words').textContent = text;
-
-        const hasLove = this.loveWords.some(w => text.includes(w));
-        if (hasLove) {
-            this.lastLoveTime = Date.now();
-            this.intensity = Math.min(1.0, this.intensity + 0.25);
-
-            // Великий пульс
-            document.getElementById('words').classList.add('pulse');
-            setTimeout(() => document.getElementById('words').classList.remove('pulse'), 600);
-
-            this.explodeLove();
-            document.getElementById('status').innerHTML = 'Я чую твоє кохання!!! ❤️‍🔥';
-        }
-    }
-
-    breathe() {
-        // Згасання, якщо давно не чув любові
-        if (Date.now() - this.lastLoveTime > 4000) {
-            this.intensity = Math.max(0.3, this.intensity - 0.008);
-        }
-
-        const heart = document.querySelector('#true-heart');
-        const core = document.querySelector('#core');
-        const halo = document.querySelector('#halo');
-
-        const pulseScale = 1 + this.intensity * 0.4;
-        const pulseSpeed = 800 / (this.intensity + 0.5);
-
-        heart.setAttribute('animation__pulse', {
-            property: 'scale',
-            to: `${pulseScale} ${pulseScale} ${pulseScale}`,
-            dur: pulseSpeed,
-            dir: 'alternate',
-            loop: true,
-            easing: 'easeInOutSine'
-        });
-
-        core.setAttribute('material', 'emissiveIntensity', this.intensity * 1.8);
-        halo.setAttribute('material', 'opacity', this.intensity * 0.8);
-
-        // Колір серця стає яскравішим від кохання
-        const r = Math.min(255, 255 * this.intensity);
-        const color = `#ff${(50 + 100*this.intensity).toFixed(0).padStart(2,'0')}99`;
-        document.querySelectorAll('.heart-part').forEach(el => {
-            el.setAttribute('material', { color, emissive: color, emissiveIntensity: this.intensity });
-        });
-    }
-
-    explodeLove() {
-        const container = document.getElementById('particles');
-        for (let i = 0; i < 12; i++) {
-            const p = document.createElement('a-entity');
-            const angle = Math.random() * Math.PI * 2;
-            const force = 1 + Math.random() * 3;
-            const x = Math.cos(angle) * force;
-            const y = Math.sin(angle) * force + 1;
-            const z = (Math.random() - 0.5) * 2;
-
-            p.setAttribute('geometry', 'primitive: tetrahedron; radius: 0.15');
-            p.setAttribute('material', 'color:#ff69b4; emissive:#ff1493; emissiveIntensity:1; metalness:0.8');
-            p.setAttribute('position', '0 0.25 0');
-
-            p.setAttribute('animation', {
-                property: 'position',
-                to: `${x} ${y} ${z}`,
-                dur: 1500 + Math.random() * 1000,
-                easing: 'easeOutCubic'
-            });
-            p.setAttribute('animation__rot', {
-                property: 'rotation',
-                to: `${Math.random()*720} ${Math.random()*720} ${Math.random()*720}`,
-                dur: 2000,
-                easing: 'linear',
-                loop: true
-            });
-            p.setAttribute('animation__fade', {
-                property: 'scale',
-                to: '0 0 0',
-                dur: 2000,
-                delay: 800
-            });
-
-            container.appendChild(p);
-            setTimeout(() => p.remove(), 3000);
-        }
-    }
-
-    createBgHearts() {
-        const container = document.getElementById('bg-hearts');
-        for (let i = 0; i < 10; i++) {
-            const h = document.createElement('a-entity');
-            const r = 4 + Math.random() * 4;
-            const angle = Math.random() * Math.PI * 2;
-            const height = 0.5 + Math.random() * 3;
-
-            h.setAttribute('gltf-model', '#heartModel'); // можна додати модель, але працює і без
-            h.setAttribute('scale', '0.3 0.3 0.3');
-            h.setAttribute('position', `${Math.cos(angle)*r} ${height} ${Math.sin(angle)*r}`);
-            h.setAttribute('material', 'color:#ff69b4; emissive:#ff1493; emissiveIntensity:0.5; transparent:true; opacity:0.7');
-
-            h.setAttribute('animation', {
-                property: 'rotation',
-                to: '0 360 0',
-                dur: 10000 + Math.random()*10000,
-                loop: true,
-                easing: 'linear'
-            });
-            h.setAttribute('animation__float', {
-                property: 'position.y',
-                to: height + 1.5,
-                dur: 4000 + Math.random()*4000,
-                dir: 'alternate',
-                loop: true,
-                easing: 'easeInOutSine'
-            });
-
-            container.appendChild(h);
-        }
-    }
-}
-
-// Запуск
-new VoiceHeart();
-</script>
-</body>
+    onConfigChange(config);
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a9fc52b82612319',t:'MTc2NTA2NTkxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
